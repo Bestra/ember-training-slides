@@ -63,11 +63,15 @@ cd contact-manager
 cd into your new app and run it with `ember serve`
 
 ![Hello World](/slide-images/hello.png)
----
 
+---
+# Ember inspector
+* Chrome and Firefox
+
+---
 # Ember CLI Project Structure
 ![Ember project structure](/slide-images/project-structure.png)
----
+
 ---
 # Ember Concepts - an aside
 
@@ -86,7 +90,7 @@ cd into your new app and run it with `ember serve`
 ---
 # defining routes
 
-`yourapp/router.js` defines all the available routes. The router has its own DSL
+`router.js` defines all the available routes. The router has its own DSL
 for describing your app, which we'll cover in detail shortly.  The simplest DSL function is
 'route'.
 
@@ -96,10 +100,54 @@ Router.map(function() {
 });
 ```
 
-Now we can go to `localhost:4200/contacts' and see something.
+Ember will expect us to have a Route defined at `app/routes/contacts.js` or it will
+automatically generate a default one for us at runtime. Visiting `/contacts` will render
+`/templates/contacts.hbs`
 
 ^
 - ES6 imports
+
+---
+# Resources and Nested Routes
+
+```
+Router.map(function() {
+  this.resource("contacts", { path: "/contacts" }, function() {
+    this.route("edit");
+  });
+});
+```
+
+A **resource** can nest other routes or resources under it.
+[The Guide](http://emberjs.com/guides/routing/defining-your-routes/) does just as good of a job
+explaining it as I would here.
+
+---
+# Routes are run sequentially
+
+```
+URL                  Routes Run
+
+/                    application -> index
+/contacts            application -> contacts -> contacts.index
+/contacts/edit       application -> contacts -> contacts.edit
+```
+---
+#Dynamic Segments
+
+```
+this.route("show", { path: "/:id });
+```
+The `id` parameter will be available to the `show` route in the example above.
+
+Dynamic segments are underscored.
+```
+this.route("show", { path: "/:long_param" });
+```
+---
+# The Ember Inspector
+
+* Browser extension for Chrome and Firefox
 
 ---
 # Route Names
@@ -117,6 +165,17 @@ If we don't make these objects ourselves,
 **Ember will generate them for us at runtime**
 
 ---
+# Templates
+* Handlebars syntax + ember-specific helpers
+* No arbitrary interpolation
+
+---
+# Template Nesting
+
+* Child routes render into their parent via {{outlet}}
+* The Application route is the root
+
+---
 # Contacts Template
 
 ```
@@ -124,7 +183,4 @@ If we don't make these objects ourselves,
 ```
 
 Open it up...
-
----
-# Huh?
 
