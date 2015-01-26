@@ -57,7 +57,7 @@ to show off the key strengths and weaknesses of Ember.
 ---
 # Hello World!
 
-```
+```sh
 npm install -g bower
 npm install -g ember-cli@0.1.7
 ember new contact-manager
@@ -157,6 +157,7 @@ var Person = Ember.Object.extend({
   cats: [] // every instance of Person will have the same cats
 })
 ```
+
 ^
 - Person will be the prototype for any instance
 - Easy to accidentally mutate someone else's array
@@ -185,17 +186,18 @@ dude = CatPerson.create();
 ---
 # Getters and setters
 
-```
+```javascript
 var foo = Ember.Object.create({name: "Dude"});
 foo.get('name'); // "Dude"
 foo.set('name', "Sweet")
 ```
+
 Why do we need these?
 
 ---
 # Computed Properties
 
-```
+```javascript
 var Person = Ember.Object.extend({
   firstName: "Some",
   lastName: "Guy",
@@ -284,13 +286,14 @@ fullName: Ember.computed('firstName, 'lastName', {
 ---
 # Defining Routes
 
-```
+```javascript
 // router.js
 
 Router.map(function() {
   this.route("contacts", { path: "/contacts" });
 });
 ```
+
 ^
 - ES6 imports
 - Ember will expect us to have a Route defined at `app/routes/contacts.js` or it will
@@ -300,7 +303,7 @@ automatically generate a default one for us at runtime. Visiting `/contacts` wil
 ---
 # Route definitions and names
 
-```
+```javascript
 this.route("contacts", { path: "/contacts" });
 ```
 
@@ -315,7 +318,7 @@ If we don't make these objects ourselves,
 ---
 # Resources and Nested Routes
 
-```
+```javascript
 Router.map(function() {
   this.resource("contacts", { path: "/contacts" }, function() {
     this.route("edit"); // contacts.edit route
@@ -362,6 +365,7 @@ export default Ember.Route.extend({
   },
 });
 ```
+
 ^
 - `model` is a _hook_ the route provides
 - More on route hooks shortly.
@@ -397,13 +401,14 @@ export default Ember.Route.extend({
 ---
 #Dynamic Route Segments
 
-```
+```javascript
 this.route("show", { path: "/:id });
 ```
+
 The `id` parameter will be available to the `show` route in the example above.
 
 Dynamic segments are underscored.
-```
+```javascript
 this.route("show", { path: "/:long_param" });
 ```
 
@@ -420,19 +425,78 @@ this.route("show", { path: "/:long_param" });
 ---
 # beforeModel
 
-```
+```javascript
 beforeModel: function(transition) {}
 ```
 
+^
 - Abort or redirect if needed
+- Often when making authorization decisions
 
 ---
 # model
-# serialize and slugging
+```javascript
+model: function(params) {}
+```
+
+^
+- Dynamic segment content is inserted into `params`
+- Most common place to make an ajax request
+
+---
+# serialize
+```javascript
+serialize: function(model) {
+  return "This-slug-goes-in-the-url";
+}
+```
+
+- Default method returns `model.id`
+
+---
 # afterModel
+```javascript
+afterModel: function(model, transition) {}
+```
+
+---
 # The Model Hooks Wait for Promises
+
+---
 # setupController
+
+```javascript
+//this is the default implementation
+setupController: function(controller, model) {
+  controller.set('model', model);
+}
+```
+- setup other state
+
+```javascript
+setupController: function(controller, model) {
+  this._super(controller, model);
+  controller.set('page', 5);
+  this.controllerFor('application').set('currentPage', 5);
+}
+```
+
+---
+# controllerFor
+
+Available in any route
+
+^
+- gets the singleton instance of the named controller
+- common to set application state on application controller
+
+---
+# where does the controller in setupController come from?
+
+---
 # renderTemplate
+* calls `route.render()`
+* use when you don't have 1:1 routes:templates
 
 ---
 # Routes are run sequentially
@@ -444,12 +508,18 @@ URL                  Routes Run
 /contacts            application -> contacts -> contacts.index
 /contacts/edit       application -> contacts -> contacts.edit
 ```
+
 ---
 
 # {{link-to}} and transitions
 # link-to and transitionTo work the same
 # transition parameters
 # keeping the model hook from running
+
+---
+# routes without dynamic segments always run their model hooks
+ * You can't provide a model in `transitionTo()`
+---
 # aborting transitions
 
 # modelFor and controllerFor
@@ -461,6 +531,7 @@ URL                  Routes Run
 # preventing bubbling with {{action bubbles=false}}
 # data down actions up
 
+# using actions and route.render() to show a modal
 # route loading substates
 
 # TESTING integration testing using module() and startApp()
