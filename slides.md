@@ -77,6 +77,10 @@ cd into your new app and run it with `ember serve`
 ![Ember project structure](/slide-images/project-structure.png)
 
 ---
+# Pods
+http://www.ember-cli.com/#pod-structure
+
+---
 # Ember Concepts
 
 ## MVC != MVC
@@ -294,6 +298,8 @@ Router.map(function() {
 });
 ```
 
+* [Ember Routing Guide](http://emberjs.com/guides/routing/defining-your-routes/#toc_resources)
+
 ^
 - ES6 imports
 - Ember will expect us to have a Route defined at `app/routes/contacts.js` or it will
@@ -316,17 +322,38 @@ If we don't make these objects ourselves,
 **Ember will generate them for us at runtime**
 
 ---
-# Resources and Nested Routes
+#Dynamic Route Segments
+
+```javascript
+this.route("show", { path: "/:id });
+```
+
+The `id` parameter will be available to the `show` route in the example above.
+
+Dynamic segments are underscored.
+```javascript
+this.route("show", { path: "/:long_param" });
+```
+
+---
+# Nested routes and nested resources
 
 ```javascript
 Router.map(function() {
   this.resource("contacts", { path: "/contacts" }, function() {
-    this.route("edit"); // contacts.edit route
-    this.route("add"); // contacts.add route
+    this.route("show", {path: ":contact_id"}); // contacts.show route
+    this.route("edit", {path: ":contact_id"}); // contacts.edit route
+    this.route("new"); // contacts.new route
+
+    this.resource("export") // export route
+
     //contacts.index route is auto-generated
   });
 });
 ```
+^
+- nested resources will reset their namespace
+- routes can specify a namespace directly if they want
 
 ---
 # Route nesting = template nesting
@@ -348,6 +375,7 @@ Router.map(function() {
 
 ---
 # Data Flow
+
 - A model can be a value, an object, an array, etc.
 - Route provides model to controller
 - Controller _decorates_ model for display in the template
@@ -392,6 +420,7 @@ export default Ember.Route.extend({
 # Unit testing with moduleFor
 
 # Common Handlebars Helpers
+# binding data to the template
 # Using {{bind-attr}}
 # Class Name Syntax
 # Rendering Lists with {{#each}}
@@ -399,18 +428,11 @@ export default Ember.Route.extend({
 # Select boxes
 
 ---
-#Dynamic Route Segments
+# {{partial}}
 
-```javascript
-this.route("show", { path: "/:id });
-```
-
-The `id` parameter will be available to the `show` route in the example above.
-
-Dynamic segments are underscored.
-```javascript
-this.route("show", { path: "/:long_param" });
-```
+^
+- Partial doesn't take any locals
+- Use a component or a view
 
 ---
 # The Route Lifecycle
@@ -463,6 +485,15 @@ afterModel: function(model, transition) {}
 # The Model Hooks Wait for Promises
 
 ---
+# redirect
+- redirect vs. afterModel
+
+^
+- transitioning to a child route from redirect WON'T run this route's model
+hooks again.
+- transitioning to a child route from afterModel WILL
+
+---
 # setupController
 
 ```javascript
@@ -484,7 +515,8 @@ setupController: function(controller, model) {
 ---
 # controllerFor
 
-Available in any route
+- Available in any route
+- lookup by name
 
 ^
 - gets the singleton instance of the named controller
@@ -497,6 +529,7 @@ Available in any route
 # renderTemplate
 * calls `route.render()`
 * use when you don't have 1:1 routes:templates
+* we'll cover `render()` later
 
 ---
 # Routes are run sequentially
@@ -508,46 +541,323 @@ URL                  Routes Run
 /contacts            application -> contacts -> contacts.index
 /contacts/edit       application -> contacts -> contacts.edit
 ```
-
 ---
-
-# {{link-to}} and transitions
-# link-to and transitionTo work the same
-# transition parameters
-# keeping the model hook from running
-
----
-# routes without dynamic segments always run their model hooks
- * You can't provide a model in `transitionTo()`
----
-# aborting transitions
 
 # modelFor and controllerFor
 
-# actions
-# {{action "foo"}}
-# action bubbling chain
-# preventing bubbling by returning false
-# preventing bubbling with {{action bubbles=false}}
-# data down actions up
+```javascript
+ApplicationController = Ember.Controller.extend({
+  model: function() {
+    return {id: 5, name: "Steve"}
+  })
+}
 
-# using actions and route.render() to show a modal
+ContactsController = Ember.Controller.extend({
+  model: function() {
+    var currentUser = this.modelFor('application');
+    return $.getJSON('api/user/' + currentUser.get('id') + '/contacts');
+  })
+
+  afterModel: function() {
+    this.controllerFor('application').set('currentPage', 'contacts')
+  }
+}
+```
+
+^
+- a route can access models from its parents
+
+---
 # route loading substates
 
+```javascript
+Router.map(function() {
+  this.resource('contacts', function() {
+    this.route('show', {path: "/:contact_id"});
+  });
+})
+```
+---
+# EXAMPLE render loading templates
+
+---
+# EXAMPLE a spinner with loading and didTransition
+
+---
+# {{link-to}} and transitions
+
+```
+template: {{link-to "contacts.edit" 1}}
+
+route: this.transitionTo("contacts.edit", 1);
+```
+^
+
+- link-to and transitionTo work the same
+
+---
+# transitions and dynamic segments
+
+```javascript
+this.route("calendar.edit_appointment", {path: "calendar/calendar/:date/:appointment_id/edit"})
+
+this.resource("calendar", {path: "/calendar/:date"}, function() {
+  this.resource("appointment", {path: "/:appointment_id"}, function() {
+    this.route("edit"); // appointment.edit route
+  })
+})
+
+{{link-to "calendar.appointment.edit" "2015-2-12" 1}}
+```
+- 1 param per *dynamic* segment
+---
+# passing a model to a transition
+
+```
+appointmentModel = {startTime: "2:00", notes: "Meet Jerry", id: 5}
+
+{{link-to "calendar.appointment.edit" "2015-2-12" appointmentModel}}
+```
+* AppointmentRoute's model hooks *won't* run
+* The `serialize` hook will put the model's id into the url
+
+---
+# routes without dynamic segments always run their model hooks
+
+```javascript
+this.resource("calendar", {path: "/calendar/:date"}, function() {
+  this.resource("appointment", {path: "/:appointment_id"}, function() {
+    this.route("edit"); // appointment.edit route
+  })
+})
+```
+
+^
+- Index routes with big ajax payloads
+
+---
+# aborting and redirecting transitions
+
+---
+# actions
+### No more $.on()*
+
+<small>*mostly</small>
+
+---
+# Sending an action
+
+```html
+<div class="counter">
+  <button {{action "decrementCounter"}}>-</button>
+  <p>{{count}} things</p>
+  <button {{action "incrementCounter"}}>+</button>
+</div>
+```
+
+```javascript
+ContactsController = Ember.Controller.extend({
+
+  actions: {
+   decrementCounter: function() {
+    this.get('model').decrementProperty('count');
+   },
+   incrementCounter: function() {
+    this.get('model').incrementProperty('count');
+   }
+  }
+});
+```
+
+---
+# Action Parameters
+
+```html
+{{#each widget in widgets}}
+  <div class="counter">
+    <button {{action "decrementCounter" widget}}>-</button>
+    <p>{{widget.count}} items in this widget</p>
+    <button {{action "incrementCounter" widget}}>+</button>
+  </div>
+{{/each}}
+```
+
+```javascript
+ContactsController = Ember.Controller.extend({
+
+  actions: {
+   decrementCounter: function(widget) {
+    widget.decrementProperty('count');
+   },
+   incrementCounter: function(widget) {
+    widget.decrementProperty('count');
+   }
+  }
+});
+```
+^
+- Actions eliminate the need to attach data-foo to dom elements
+- Pass the entire object with the action rather than looking it up by id later
+
+---
+# actions on other non-click events
+
+```
+<form {{action "save" on="submit"}}</form>
+```
+
+- full list [here](http://emberjs.com/guides/understanding-ember/the-view-layer/#toc_adding-new-events)
+
+---
+# action hierarchy
+
+```javascript
+                ApplicationRoute
+                    ^
+                    |
+                    +
+                  Routes...
+                    ^
+                    |
+                    +
+Controller  +-->  Route
+    ^
+    |
+    +
+Template
+```
+
+---
+# Action propogation
+
+```javascript
+  actions: {
+    clicked: function() {
+     console.log("I was clicked");
+     return true // forces the action to bubble
+    }
+  }
+```
+^
+- by default they don't
+
+---
+# actions bubble
+
+```
+<div class="container" {{action "editItem" item}}>
+  <div class="delete {{action "deleteItem" item}}></div>
+</div>
+
+```
+
+---
+# bubbles=false
+
+```
+<div class="container" {{action "editItem" item}}>
+  <div class="delete {{action "deleteItem" item bubbles=false}}></div>
+</div>
+
+```
+
+---
+# send()
+
+```javascript
+actions: {
+  delete: function(item) {
+  this.send("confirmDelete", "Are you sure?", item)
+  }
+}
+```
+
+^
+- Routes, Components, Views, Controllers via `Ember.ActionHandler`
+- Can send to self
+
+---
+# Actions are harder to test
+
+- testing support in controllers and components
+- less support for routes
+- use methods instead when possible
+
+---
+# Modal Example
+http://emberjs.jsbin.com/yiyuji/1/edit?html,css,js,output
+- [Ember.Route.render](http://emberjs.com/api/classes/Ember.Route.html#method_render)
+docs are useful
+
+^
+- the controller created by render is a singleton
+- Disconnecting the outlet doesn't destory the controller
+
+---
 # TESTING integration testing using module() and startApp()
 
-# Query Params are a controller thing
-
+---
 # Components
+- js and template
+
+---
 # component naming conventions
+- Name needs a dash (follows web component convention)
+- Slashes in component names as of handlebars 2.0 `cat-person/list`
+
+```
+{{cat-person}}
+without pods:
+/app/components/cat-person.js
+/app/templates/components/cat-person.js
+
+pods:
+/app/pods/components/cat-person/component.js
+/app/pods/components/cat-person/template.hbs
+```
+
+---
 # components are isolated
+
+---
 # passing data in
+
+---
 # actions
 # single action
 # named actions
+
+---
+# component roles
+
+## reusable widgets
+- translate low-level events (DOM) to high-level events (app domain)
+- manage screen real estate
+
+---
+# Components as widgets
+
+{{calender-item clicked="deleteItem"}}
+- caller decides what the low level event should translate to
+- `calender-item` can be used in many different places
+
+---
+# data down actions up
+- two-way bindings into widget components should be avoided
+- a widget shouldn't modify high-level app state
+
+---
+# debounce example
+- several components save a model
+- controller implements debounce in one place
+- debounce happens some times, some times not.
+
+---
 # component block form
 # block params
 # component block form is super useful
+# nesting components
+# using `this.parentView` in a nested component
 
 # component lifecycle
 # binding classes
@@ -559,6 +869,8 @@ URL                  Routes Run
 # TESTING components
 # component actions
 # using the integration helpers to test a rendered component
+
+# Query Params are a controller thing
 
 # services
 # Ember.inject.service()
