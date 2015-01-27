@@ -822,9 +822,6 @@ pods:
 ---
 # passing data in
 
-^
-- components act like any other handlebars helper
-
 ---
 # actions
 # single action
