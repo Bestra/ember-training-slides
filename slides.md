@@ -8,7 +8,7 @@
 # Prerequisites
 
 - You should be pretty comfortable in javascript.
-- You need a computer that can run node.js
+- Node.js installed
 - Install the Ember Inspector plugin for chrome or firefox
 
 ---
@@ -91,6 +91,12 @@ http://www.ember-cli.com/#pod-structure
 - Don't try to make an analogy to your previous experience based on what the thing is called.
 
 ---
+# Embering vs. Javascripting
+
+* Happy path is all Ember
+* Anything else needs good javascript
+
+---
 # The Ember object model
 
 ```javascript
@@ -114,6 +120,7 @@ var Warrior = Person.extend({
 
 ---
 # init
+
 ```javascript
 var Person = Ember.Object.extend({
   init: function() {
@@ -165,6 +172,7 @@ var Person = Ember.Object.extend({
 ^
 - Person will be the prototype for any instance
 - Easy to accidentally mutate someone else's array
+- Mainly a problem with superclasses and mixins
 
 ---
 # Mixins
@@ -195,8 +203,42 @@ var foo = Ember.Object.create({name: "Dude"});
 foo.get('name'); // "Dude"
 foo.set('name', "Sweet")
 ```
+## setProperties
+## incrementProperty
 
-Why do we need these?
+---
+# Chaining
+
+```javascript
+var walter = Ember.Object.create({name: "Walter"}),
+var donny = Ember.Object.create({name: "Donny", friend: a})
+
+donny.get('friend.name'); // => "Walter"
+donny.get('friend.rollsOnShabbos') //=> undefined
+donny.get('notThere.rollsOnShabbos') //=> undefined
+```
+
+^
+- Using get will keep you from getting "Cannot read 'foo' of undefined"
+- That's a good thing and a bad thing
+
+---
+# POJOs
+
+```javascript
+var a = {foo: 'bar'};
+a.get('foo') // explodes
+a.set('dude', 'sweet') // also explodes
+
+Ember.get(a, 'foo');
+Ember.set(foo, 'dude', 'sweet');
+```
+
+^
+- Ember.get and Ember.set will work on Ember objects and POJOs
+
+---
+Why do we need getters and setters?
 
 ---
 # Computed Properties
@@ -205,24 +247,27 @@ Why do we need these?
 var Person = Ember.Object.extend({
   firstName: "Some",
   lastName: "Guy",
+
   fullName: function() {
     return this.get('firstName') + " " + this.get('lastName');
-}.property('firstName', 'lastName')
-```
+  }.property('firstName', 'lastName'),
 
+  //always updates
+  eagerProperty: function() {
+    return window.location.origin
+  }.property().volatile(),
+
+  //alternate syntax
+  otherFullName: Ember.computed('firstName, 'lastName', function() {
+    return this.get('firstName') + " " + this.get('lastName');
+  })
+})
+```
 ^
 - property takes any number of dependent keys
 - value is cached until one of the dependent properties changes
 - changing a dependent property without using `set()` won't change the CP
-
----
-# Alternate syntax
-
-```javascript
-fullName: Ember.computed('firstName, 'lastName', function() {
-  return this.get('firstName') + " " + this.get('lastName');
-})
-```
+- getters and setters eliminate the need for dirty checkinga ala angular
 
 ---
 # Array dependencies
@@ -233,6 +278,7 @@ fullName: Ember.computed('firstName, 'lastName', function() {
 
 ---
 # computed setters
+
 Current:
 
 ```javascript
@@ -265,20 +311,108 @@ fullName: Ember.computed('firstName, 'lastName', {
 ^
 - Currently done by checking the number of args in the getter function
 - New method part of the 2.0 rfc
+
 ---
-# Ember.Enumerable mixin
-- Most collections, including array literals `[]`
+# Arrays
+
+[reference](http://emberjs.com/api/classes/Ember.Array.html)
+
+```javascript
+var a = [1,2,3];
+
+a.get('length')
+a.get('firstObject')
+a.objectAt(1)
+a.indexOf(3)
+
+var theDude = {name: "Lebowski"};
+
+var people = [{name: "Lebowski"}, {name: "Bunny"}];
+
+people.contains(theDude);
+
+people.addObject(theDude);
+people.addObject(theDude);
+
+```
+^
+- Finding in a collection is all done by reference
+- Always use the getters for access.
+- addObject vs. pushObject
+
+---
+# Collections and Ember.Enumerable
+- common mixin for all collections
+- included on native arrays by default, including literals `[]`
 - Big surface area, very useful!
+
+map
+mapBy
+find
+findBy
+invoke
+isAny
+isEvery
 
 ---
 # Ember.computed
 
-- Lots of common shortcuts (http://emberjs.com/api/)
+- [Lots of common shortcuts](http://emberjs.com/api/#method_computed_alias)
 - Improves readability
 - Helpers for array operations (sort, filter etc)
+- manage dependent keys automatically
+---
+# Motivating example - meals
+
+```javascript
+
+var Ingredient = Ember.Object.extend({
+  hasFish: false
+  calories: 0,
+  name: ""
+});
+
+var Meal = Ember.Object.extend({
+  //passed in properties
+  ingredients: null, //an array
+
+  //just for illustration
+  initIngredients: function() {
+    if (!this.get('ingredients')) {
+      this.set('ingredients', []); //avoid prototype problems but don't override passed in values
+    }
+  }.on('init')
+
+  //computed properties
+  ingredientCalories: Ember.computed.mapBy('ingredients', 'calories'),
+  totalCalories: Ember.computed.sum('ingredientCalories'),
+
+  isUnderCalories: Ember.computed.lt('totalCalories', 500),
+
+  fishIngredients: Ember.computed.filterBy('ingredients', 'hasFish'),
+  noFish: Ember.computed.empty('fishIngredients'),
+
+  isValid: Ember.computed.and('isUnderCalories', 'noFish'),
+
+  addIngredient: function(ingredient) {
+    this.get('ingredients').addObject(ingredient);
+  }
+
+});
+
+var lunch = Meal.create();
+var chz = Ingredient.create({name: "Cheese", calories: 50});
+var lettuce = Ingredient.create({name: "lettuce", calories: 20});
+lunch.get('ingredients').addObject(chz) //this kinda stinks
+lunch.addIngredient(lettuce) // better;
+
+```
+^
+- too many computed properties (CPs) can _reduce_ readability on occasion.
 
 ---
 # Routing
+
 ## URL = Application State
 
 ^
@@ -403,6 +537,7 @@ export default Ember.Route.extend({
 
 - Ember provides Controller, ObjectController, and ArrayController
 - ObjectController and ArrayController proxy their models
+- 'model' is aliased to 'content'
 
 ^
 - Proxying is [on the way out](https://github.com/emberjs/rfcs/pull/15), so avoid it if possible
@@ -414,16 +549,129 @@ export default Ember.Route.extend({
 - Controllers stick around after being instantiated.
 
 ---
+# Proxies
 
+```javascript
+var proxy = Ember.ObjectProxy.create();
+proxy.set('content', {foo: "bar"});
+proxy.get('foo');
+
+proxy.set('whatever', "you want");
+proxy.get('anything');
+
+^
+- The proxy delegates gets and sets to its content if they don't exist on the proxy
+- Proxies blow up if an undefined prop gets set (one not defined on the prototype)
+- Proxies also blow up when getting an undefined prop instead of just returning undefined
+
+```
+---
 # TESTING
 # Basic setup with ember cli
 # Unit testing with moduleFor
 
-# Common Handlebars Helpers
-# binding data to the template
+---
+# Templates
+
+---
+# Handlebars
+
+- Mustache on steriods
+- Ember handlebars is Handlebars on HGH
+^
+- Ember has some helpers that are specific
+- Vanilla handlebars uses some helpers that never show up in real Ember code
+---
+# {{debugger}}
+
+## Demo
+^
+- Stops you in the middle of rendering
+- Helpful comments in situ
+---
+# the rendering context
+
+- Controller or Component
+
+context.foo --> {{foo}}
+
+---
+# comments with {{!-- }}
+
+^
+- html comments will either be rendered or blow up your template
+---
 # Using {{bind-attr}}
+
+```
+<div class={{active}}> //no good yet.  Coming soon!
+<div {{bind-attr class=active}}>
+<div {{bind-attr class='active'}}> // stil binds to the context.active
+
+<div {{bind-attr class=true}}> //wont work
+```
+
+- bind-attr with booleans adds or removes the attr.
+```
+hbs:
+<button {{bind-attr disabled=isDisabled}}></button>
+
+html:
+<button disabled> //context.isDisabled is truthy
+<button> //context.isDisabled is truthy
+```
+
+---
 # Class Name Syntax
+{{bind-attr class="..."}}
+
+```
+class="..."          bound value       class output
+==============================================
+"activity"              "is-active"       "is-active"
+
+"isActive"              true              "is-active"
+"isActive"              false              ""
+
+"isActive:active"       true              "active"
+"isActive:active"       false             ""
+
+"isActive:active:lazy"  true              "active"
+"isActive:active:lazy"  false             "lazy"
+
+"isActive::lazy"        true              ""
+"isActive::lazy"        false             "lazy"
+
+":wont-change"          (not bound)       "wont-change"
+
+```
+
+"isActive:active :wont-change hidden"
+
+^
+- string bindings work like normal
+- booleans property names will get dasherized
+- you can bind multiple classes
+---
+# {{#if}} {{else}} and {{#unless}}
+```
+{{#if foo}}
+  stuff
+{{else}}
+  no stuff
+{{/foo}}
+
+// {{#unless}} is what you'd expect
+```
+
+^
+- Block helpers start with #, end with /
+- Wrap content
+- 'logicless' means this is as good as it gets
+
+---
 # Rendering Lists with {{#each}}
+# {{#link-to}} and {{link-to}}
 # Basic {{input}}
 # Select boxes
 
@@ -432,7 +680,9 @@ export default Ember.Route.extend({
 
 ^
 - Partial doesn't take any locals
-- Use a component or a view
+- Ember cli expects a normal path name
+- non-cli expects the partial to start with '_' ala Rails
+- Use a component as a partial instead
 
 ---
 # The Route Lifecycle
@@ -502,6 +752,7 @@ setupController: function(controller, model) {
   controller.set('model', model);
 }
 ```
+
 - setup other state
 
 ```javascript
@@ -511,6 +762,12 @@ setupController: function(controller, model) {
   this.controllerFor('application').set('currentPage', 5);
 }
 ```
+
+---
+# Controllers and .init
+
+- controllers are proxies
+- both getting and setting undefined props will cause a `TypeError`
 
 ---
 # controllerFor
@@ -578,16 +835,18 @@ Router.map(function() {
 })
 ```
 ---
+<!-- TODO: jsbin -->
 # EXAMPLE render loading templates
 
 ---
+<!-- TODO: jsbin -->
 # EXAMPLE a spinner with loading and didTransition
 
 ---
 # {{link-to}} and transitions
 
 ```
-template: {{link-to "contacts.edit" 1}}
+template: {{#link-to "contacts.edit" 1}}
 
 route: this.transitionTo("contacts.edit", 1);
 ```
@@ -784,6 +1043,7 @@ actions: {
 - use methods instead when possible
 
 ---
+<!-- jsbin -->
 # Modal Example
 http://emberjs.jsbin.com/yiyuji/1/edit?html,css,js,output
 - [Ember.Route.render](http://emberjs.com/api/classes/Ember.Route.html#method_render)
@@ -830,6 +1090,8 @@ pods:
 ---
 # component roles
 
+## partials with locals
+
 ## Reusable Widgets
 - translate low-level events (DOM) to high-level events (app domain)
 - manage screen real estate
@@ -869,11 +1131,15 @@ pods:
 # jquery with components
 # changing application state in components -dont if possible
 
+# places where you can't use components
+# render()
+
 # TESTING components
 # component actions
 # using the integration helpers to test a rendered component
 
 # Query Params are a controller thing
+# using the query-params handlebars helper
 
 # services
 # Ember.inject.service()
@@ -884,7 +1150,6 @@ pods:
 # Controllers, Components, Views
 # Tempate Rendering Context
 # View layouts
-
 
 # observers
 # observers are synchronous
@@ -903,6 +1168,8 @@ pods:
 # effective breakpoints
 # {{debugger}} to inspect template context
 
+# Writing forms
+
 ==============
 
 # Ember Data
@@ -915,5 +1182,9 @@ pods:
 # Reading the source
 
 # antipattern: doing too much work init
+
+======
+
+# Using sass with ember cli
 
 
