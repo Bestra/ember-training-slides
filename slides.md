@@ -503,7 +503,8 @@ Router.map(function() {
 
 ---
 # Resource makes a common parent route/template for its children
-
+<!-- jsbin nested resource/templates -->
+[example jsbin](http://emberjs.jsbin.com/pocico/1/edit?html,js,output)
 ^
 - Show how via contacts
 
@@ -670,10 +671,129 @@ class="..."          bound value       class output
 - 'logicless' means this is as good as it gets
 
 ---
+# Using {{with}}
+
+```
+<div class="cat-box">
+  {{someThing.person.cat.name}} is in the box and {{get-pronoun someThing.person.cat}} is
+  {{someThing.person.cat.hungryStatus}}
+</div>
+
+{{#with someThing.person.cat as |cat|}}
+  {{cat.name}} is in the box and {{get-pronoun cat}} is
+  {{cat.hungryStatus}}
+{{/with}}
+```
+
+---
 # Rendering Lists with {{#each}}
+
+- old syntax {{#each foo in foos}}
+- newer block syntax {{#each foos as |foo|}}
+---
 # {{#link-to}} and {{link-to}}
+
+---
 # Basic {{input}}
+- The [input helpers guide](http://emberjs.com/guides/templates/input-helpers/) gives a useful overview
+- [input api docs](http://emberjs.com/api/classes/Ember.Handlebars.helpers.html#method_input)
+- specify types
+- bind to or set most html attributes
+- bind actions if needed
+
+```
+{{input value=model.foo placeholder="Foo goes here"}}
+```
+^
+- value binding is two-way
+---
+# check boxes
+
+```
+{{input type="checkbox" name="Likes Cats" checked=likesCats}}
+```
+
+^
+- note 'name' is another html attribute. most of them won't be needed.
+---
 # Select boxes
+
+- 2 cases for using selects
+^ - an empty select will default to the first value unless you set "prompt='foo'"
+---
+# Select w/strings
+
+```
+// colors = ['red', 'blue', 'green']
+
+{{view "select" content=model.colors
+                value=selectedColor}}
+```
+^
+- it's a view rather than a handlebars helper
+- content points to an array
+- Ember generates the `<option>` tags for you
+
+---
+# Select w/objects
+```
+
+given people:
+[{id: 1, name: 'Steve'}, {id: 2, name:'Jerry'},
+ {id: 3, name: 'Bob'}, {id: 4, name: 'Larry'}]
+
+{{view "select" content=model.people
+                optionLabelPath="content.name"
+                optionValuePath="content.id"
+                prompt="Pick a guy"
+                value=selectedPerson}}
+
+produces:
+<option value="1">Steve</option>
+<option value="2">Jerry</option>
+etc.
+```
+^
+- The paths have to be strings
+
+---
+# value vs. selection
+
+```
+//if selectedThing is {id: 5, name: 'Bob'}
+{{view "select" value=selectedThing}}
+
+{{view "select" selection=selectedThing}}
+```
+^
+- with value selectedThing will be '5'
+- seletion is probably what you want. points to the object itself.
+
+---
+# Selection Groups
+
+```javascript
+groupedPeople: [{id: 1, name: 'Steve', group: "Jets"},
+                {id: 3, name: 'Bob', group: "Sharks"},
+                {id: 2, name:'Jerry', group: "Jets"},
+                {id: 4, name: 'Tecumseh', group: "Sharks"}]
+
+{{view "select" content=model.groupedPeople
+                    optionLabelPath="content.name"
+                    optionValuePath="content.id"
+                    optionGroupPath="group" // <- Not 'content.group'
+                    prompt="Pick a guy"
+                    selection=selectedPerson}}
+```
+
+![unsorted groups](/slide-images/unsorted-select-group.png)
+
+^
+- Content has to be sorted by group first
+
+---
+# multiselects
+# Radio buttons?
 
 ---
 # {{partial}}
@@ -685,6 +805,10 @@ class="..."          bound value       class output
 - Use a component as a partial instead
 
 ---
+# EXCERCISE
+
+<!-- TODO: jsbin, build a form for the provided model -->
+
 # The Route Lifecycle
  ## The 5 (or so) hooks of the apocalypse:
  - beforeModel
@@ -825,6 +949,11 @@ ContactsController = Ember.Controller.extend({
 - a route can access models from its parents
 
 ---
+# EXCERCISE
+<!-- jsbin, manipulating a simple contacts list -->
+[manipulating contacts list jsbin](http://emberjs.jsbin.com/xiguhu/2/edit?html,css,js,output)
+
+---
 # route loading substates
 
 ```javascript
@@ -834,6 +963,10 @@ Router.map(function() {
   });
 })
 ```
+---
+# activate and deactivate events
+
+
 ---
 <!-- TODO: jsbin -->
 # EXAMPLE render loading templates
@@ -1172,12 +1305,6 @@ pods:
 
 ==============
 
-# Ember Data
-# Why not until now?
-# The pieces
-
-==============
-
 # Feature flags
 # Reading the source
 
@@ -1185,6 +1312,24 @@ pods:
 
 ======
 
+# ember cli plugins
+
 # Using sass with ember cli
 
+# Ember Data
+# Why not until now?
+# The pieces
+
+# The store
+# Model
+# Adapter
+# serializer
+# transform
+
+# basically go over @tonywok's presentation
+
+# what does my server need to look like?
+# json payload types
+
+==============
 
