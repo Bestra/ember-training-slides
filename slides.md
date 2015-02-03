@@ -552,6 +552,9 @@ export default Ember.Route.extend({
 ---
 # Proxies
 
+- Ember.ObjectProxy class
+- Ember.ArrayProxy class
+
 ```javascript
 var proxy = Ember.ObjectProxy.create();
 proxy.set('content', {foo: "bar"});
@@ -559,17 +562,40 @@ proxy.get('foo');
 
 proxy.set('whatever', "you want");
 proxy.get('anything');
+```
 
 ^
 - The proxy delegates gets and sets to its content if they don't exist on the proxy
 - Proxies blow up if an undefined prop gets set (one not defined on the prototype)
 - Proxies also blow up when getting an undefined prop instead of just returning undefined
+- Array proxies will delegate map, etc. to their content property
+- Promise proxies will set their content property when their promise resolves (more later)
 
-```
 ---
 # TESTING
-# Basic setup with ember cli
-# Unit testing with moduleFor
+
+^
+- Ember CLI does most of the setup work for you.
+- Unit tests and 'integration tests'
+- Ember.Test provides general helpers that other packages use
+- Currently adapters for qunit and mocha
+
+---
+# Unit testing in qunit
+
+- complex property logic
+- business logic
+
+---
+# Qunit basics
+
+- moduleFor
+- tests
+- assertions
+- qunit testing style
+
+^
+- Ember source tests are a good place to go for examples
 
 ---
 # Templates
@@ -579,6 +605,7 @@ proxy.get('anything');
 
 - Mustache on steriods
 - Ember handlebars is Handlebars on HGH
+
 ^
 - Ember has some helpers that are specific
 - Vanilla handlebars uses some helpers that never show up in real Ember code
@@ -653,6 +680,7 @@ class="..."          bound value       class output
 - string bindings work like normal
 - booleans property names will get dasherized
 - you can bind multiple classes
+
 ---
 # {{#if}} {{else}} and {{#unless}}
 ```
@@ -690,8 +718,21 @@ class="..."          bound value       class output
 
 - old syntax {{#each foo in foos}}
 - newer block syntax {{#each foos as |foo|}}
+- trying to bind to a raw array {{someArray}} doesn't work.
 ---
 # {{#link-to}} and {{link-to}}
+
+```
+{{#link-to routeName arg1 arg2 ...}}
+  tag content goes here
+{{/link-to}}
+
+{{link-to tagContent routeName arg1 arg2 ...}}
+```
+
+^
+- adds an 'active' class to a link when the current route matches the link's specified route
+- the link-to helper is really complicated internally. just sayin.
 
 ---
 # Basic {{input}}
@@ -706,6 +747,7 @@ class="..."          bound value       class output
 ```
 ^
 - value binding is two-way
+
 ---
 # check boxes
 
@@ -717,6 +759,9 @@ class="..."          bound value       class output
 - note 'name' is another html attribute. most of them won't be needed.
 ---
 # Select boxes
+
+<!-- jsbin select boxes -->
+[Select boxes jsbin](http://emberjs.jsbin.com/nepihi/1/edit?html,css,js,output)
 
 - 2 cases for using selects
 ^ - an empty select will default to the first value unless you set "prompt='foo'"
@@ -736,8 +781,8 @@ class="..."          bound value       class output
 
 ---
 # Select w/objects
-```
 
+```
 given people:
 [{id: 1, name: 'Steve'}, {id: 2, name:'Jerry'},
  {id: 3, name: 'Bob'}, {id: 4, name: 'Larry'}]
@@ -753,6 +798,7 @@ produces:
 <option value="2">Jerry</option>
 etc.
 ```
+
 ^
 - The paths have to be strings
 
@@ -765,6 +811,7 @@ etc.
 
 {{view "select" selection=selectedThing}}
 ```
+
 ^
 - with value selectedThing will be '5'
 - seletion is probably what you want. points to the object itself.
@@ -792,11 +839,21 @@ groupedPeople: [{id: 1, name: 'Steve', group: "Jets"},
 - Content has to be sorted by group first
 
 ---
-# multiselects
-# Radio buttons?
+# Multiselects
+
+- HTML multiselect is so ugly you'll probably just make your own.
+^
+- see the jsbin for an example
+- make sure to bind to selection, not value
 
 ---
-# {{partial}}
+# Radio buttons?
+
+- no direct helper for ember
+- pretty easy to do yourself
+- some solutions exist as ember cli addons
+---
+# {{partial 'foo'}}
 
 ^
 - Partial doesn't take any locals
@@ -805,10 +862,16 @@ groupedPeople: [{id: 1, name: 'Steve', group: "Jets"},
 - Use a component as a partial instead
 
 ---
-# EXCERCISE
+# Form Excercise
 
 <!-- TODO: jsbin, build a form for the provided model -->
 
+Build a form for the provided model
+in this [jsbin](http://emberjs.jsbin.com/xiguhu/7/edit?html,css,js,output)
+
+Bonus: implement radio buttons
+
+---
 # The Route Lifecycle
  ## The 5 (or so) hooks of the apocalypse:
  - beforeModel
@@ -818,6 +881,7 @@ groupedPeople: [{id: 1, name: 'Steve', group: "Jets"},
  - (redirect)
  - setupController
  - renderTemplate
+
 ---
 # beforeModel
 
@@ -949,6 +1013,11 @@ ContactsController = Ember.Controller.extend({
 - a route can access models from its parents
 
 ---
+# Route events
+
+- 'activate' and 'deactivate'
+
+---
 # EXCERCISE
 <!-- jsbin, manipulating a simple contacts list -->
 [manipulating contacts list jsbin](http://emberjs.jsbin.com/xiguhu/2/edit?html,css,js,output)
@@ -982,6 +1051,9 @@ Router.map(function() {
 template: {{#link-to "contacts.edit" 1}}
 
 route: this.transitionTo("contacts.edit", 1);
+
+controller: this.transitionToRoute("contacts.edit", 1);
+
 ```
 ^
 
@@ -1002,6 +1074,7 @@ this.resource("calendar", {path: "/calendar/:date"}, function() {
 {{link-to "calendar.appointment.edit" "2015-2-12" 1}}
 ```
 - 1 param per *dynamic* segment
+
 ---
 # passing a model to a transition
 
@@ -1141,12 +1214,6 @@ Template
   <div class="delete {{action "deleteItem" item}}></div>
 </div>
 
-```
-
----
-# bubbles=false
-
-```
 <div class="container" {{action "editItem" item}}>
   <div class="delete {{action "deleteItem" item bubbles=false}}></div>
 </div>
@@ -1176,9 +1243,11 @@ actions: {
 - use methods instead when possible
 
 ---
-<!-- jsbin -->
-# Modal Example
-http://emberjs.jsbin.com/yiyuji/1/edit?html,css,js,output
+<!-- jsbin modal -->
+# Rendering Modals
+
+[A simple modal](http://emberjs.jsbin.com/yiyuji/1/edit?html,css,js,output)
+
 - [Ember.Route.render](http://emberjs.com/api/classes/Ember.Route.html#method_render)
 docs are useful
 
@@ -1190,8 +1259,11 @@ docs are useful
 # TESTING integration testing using module() and startApp()
 
 ---
+<!-- jsbin components -->
 # Components
-- js and template
+- [jsbin](http://emberjs.jsbin.com/wirete/2)
+- Can be defined with code and/or template.
+- Similar to a controller...
 
 ---
 # component naming conventions
@@ -1210,16 +1282,179 @@ pods:
 ```
 
 ---
-# components are isolated
-
----
 # passing data in
 
----
-# actions
-# single action
-# named actions
+Javascript
+```
+MyController = Ember.ObjectController.extend({
+  cats: ['Tom', 'Garry', 'Jerry']
+});
+CatPersonComponent = Ember.Component.extend({
+  cats: null, //passed in
+  catCount: Ember.computed.alias('cats.length')
+});
+```
 
+Templates
+```
+//application template
+{{cat-person cats=cats}}
+
+//component template
+There are {{catCount}} cats.
+<ul>
+  {{#each cat in cats}}
+    <li>
+      {{cat}}
+    </li>
+  {{/each}}
+</ul>
+```
+
+---
+# Bindings are two-way by default
+
+```
+//app
+{{name-form name=person.name}}
+
+//name-form component
+{{input value=name}}
+```
+
+---
+# Modifying a component's tag and attributes
+
+- tagName
+- classNames
+- classNameBindings
+- attributeBindings
+
+^
+- Components are all divs by default
+- use tagName, tagName can also be passed in
+- classNames is a static array
+- classNameBindings uses the same syntax as bindAttr
+- you could use both classNames and classNameBindings if you really want to
+- attributeBindings can use a 'sourceProp:attr' syntax too.
+
+---
+# Component Actions
+
+- Remember, components are isolated
+- Internal actions stay trapped unless passed out
+
+```
+//application
+{{date-picker startDate="2015-01-01"
+              endDate="2015-05-05"}}
+
+//date-picker
+<div>
+  {{#each date in cells}}
+    <div class="calendar-cell" {{action "selectDate" date}}></div>
+  {{/each}}
+  <button {{action "getPreviousMonth"}}>Last Month</button>
+  <button {{action "getNextMonth"}}>Next Month</button>
+</div>
+```
+
+^
+- All three actions here are internal
+- Component only maintains internal state
+
+---
+# Action Bindings
+
+```
+{{date-picker startDate="2015-01-01"
+              endDate="2015-05-05"
+              datePicked="setDate"}}
+
+//DatePickerComponent sends the action
+someFunction: function() {
+  this.sendAction('datePicked', this.get('currentDateString'))
+}
+
+//Controller implements setDate
+actions: {
+  setDate: function(dateString) {
+    this.set('appointment.date', Date.parse(dateString));
+  }
+}
+```
+- sendAction(actionName, arg1, arg2, ...)
+- sendAction() sends 'action' with no args
+- external action name is a string
+---
+# component events
+- click, mouseUp, etc.
+- full list defined [here](http://emberjs.com/api/classes/Ember.View.html#toc_event-names)
+- access the event from the callback
+
+---
+# component block form
+
+- Components can yield to a template
+- No crossing boundaries between component and yielded scope (normally)
+
+---
+# component block form is super useful
+- wrap common widget styling or behavior
+- substitute your own contents
+
+---
+# block params
+
+---
+# nesting components
+- flexible composition
+# using `this.parentView` in a nested component
+
+---
+# component lifecycle events
+- Enumerated fully [here](http://emberjs.com/guides/understanding-ember/the-view-layer/#toc_lifecycle-hooks)
+
+Most frequently used:
+- didInsertElement
+- willDestroyElement
+
+---
+# didInsertElement
+
+```
+MyComponent = Ember.Component.extend({
+  setupTooltips: function() {
+    this.$().tooltip();
+
+    self = this;
+    this.$().on('click', 'li', function(e) {
+      self.itemClicked();
+    });
+  }.on('didInsertElement')
+
+  itemClicked: function() {
+    this.sendAction('itemSelected');
+  }
+});
+```
+^
+- After the element is in the DOM
+- use this.$() or this.get('element')
+
+---
+# willDestroyElement
+
+Tear down what you set up.
+- Custom key event listeners
+- Jquery plugins
+
+---
+
+# changing application state in components -dont if possible
+
+# places where you can't use components
+# render()
 ---
 # component roles
 
@@ -1240,44 +1475,28 @@ pods:
 - `calender-item` can be used in many different places
 
 ---
-# data down actions up
-- two-way bindings into widget components should be avoided
-- a widget shouldn't modify high-level app state
-
----
 # debounce example
 - several components save a model
 - controller implements debounce in one place
 - debounce happens some times, some times not.
 
----
-# component block form
-# block params
-# component block form is super useful
-# nesting components
-# using `this.parentView` in a nested component
-
-# component lifecycle
-# binding classes
-# changing component element
-# didInsertElement
-# jquery with components
-# changing application state in components -dont if possible
-
-# places where you can't use components
-# render()
 
 # TESTING components
 # component actions
 # using the integration helpers to test a rendered component
 
+---
+# services
+# Ember.inject.service()
+
+---
+# initializers
+# the application container
+---
 # Query Params are a controller thing
 # using the query-params handlebars helper
 
-# services
-# Ember.inject.service()
-# initializers
-# the application container
+---
 
 # Views
 # Controllers, Components, Views
@@ -1301,7 +1520,7 @@ pods:
 # effective breakpoints
 # {{debugger}} to inspect template context
 
-# Writing forms
+# Using PromiseProxy
 
 ==============
 
