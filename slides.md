@@ -534,6 +534,17 @@ export default Ember.Route.extend({
 - More on route hooks shortly.
 
 ---
+# Routes are run sequentially
+
+```
+URL                  Routes Run
+
+/                    application -> index
+/contacts            application -> contacts -> contacts.index
+/contacts/edit       application -> contacts -> contacts.edit
+```
+
+---
 # Controllers
 
 - Ember provides Controller, ObjectController, and ArrayController
@@ -610,7 +621,12 @@ proxy.get('anything');
 - Ember has some helpers that are specific
 - Vanilla handlebars uses some helpers that never show up in real Ember code
 ---
-# {{debugger}}
+# Debugging
+# Configuring logging
+# Using the stack trace
+# effective breakpoints
+# {{debugger}} to inspect template context
+---
 
 ## Demo
 ^
@@ -977,16 +993,6 @@ setupController: function(controller, model) {
 * use when you don't have 1:1 routes:templates
 * we'll cover `render()` later
 
----
-# Routes are run sequentially
-
-```
-URL                  Routes Run
-
-/                    application -> index
-/contacts            application -> contacts -> contacts.index
-/contacts/edit       application -> contacts -> contacts.edit
-```
 ---
 
 # modelFor and controllerFor
@@ -1390,6 +1396,7 @@ actions: {
 - sendAction(actionName, arg1, arg2, ...)
 - sendAction() sends 'action' with no args
 - external action name is a string
+
 ---
 # component events
 - click, mouseUp, etc.
@@ -1442,6 +1449,7 @@ MyComponent = Ember.Component.extend({
   }
 });
 ```
+
 ^
 - After the element is in the DOM
 - use this.$() or this.get('element')
@@ -1454,11 +1462,10 @@ Tear down what you set up.
 - Jquery plugins
 
 ---
-
-# changing application state in components -dont if possible
-
 # places where you can't use components
-# render()
+- render() and friends
+- support for top-level components coming soon
+
 ---
 # component roles
 
@@ -1476,6 +1483,7 @@ Tear down what you set up.
 
 {{calender-item clicked="deleteItem"}}
 - caller decides what the low level event should translate to
+- calender-item renders itself independently
 - `calender-item` can be used in many different places
 
 ---
@@ -1484,6 +1492,9 @@ Tear down what you set up.
 - controller implements debounce in one place
 - debounce happens some times, some times not.
 
+^
+- maybe common logic should live in a service object
+---
 
 # TESTING components
 # component actions
@@ -1492,6 +1503,7 @@ Tear down what you set up.
 ---
 # services
 # Ember.inject.service()
+# Ember.inject.controller()
 
 ---
 # initializers
@@ -1515,14 +1527,9 @@ Tear down what you set up.
 # How Ember avoids DOM thrash
 # A brief look at the run loop
 # Ember.run.once
-# ArrayComputed properties
-# Rerendering lists
 
-# Debugging
-# Configuring logging
-# Using the stack trace
-# effective breakpoints
-# {{debugger}} to inspect template context
+# Rerendering lists
+# ArrayComputed properties
 
 # Using PromiseProxy
 
