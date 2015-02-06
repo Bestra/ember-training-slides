@@ -1105,6 +1105,9 @@ this.resource("calendar", {path: "/calendar/:date"}, function() {
 # aborting and redirecting transitions
 
 ---
+# replaceWith
+
+---
 # actions
 ### No more $.on()*
 

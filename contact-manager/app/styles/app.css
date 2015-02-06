@@ -41,7 +41,7 @@ h1 {
 
 .sidebar-search {
   width: calc(100% - 2rem);
-  margin: 0.2rem 1rem;
+  margin: 0.2rem 1rem 0.5rem 1rem;
   padding: 0.25rem;
 }
 
