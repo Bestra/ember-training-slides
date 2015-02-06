@@ -898,6 +898,7 @@ beforeModel: function(transition) {}
 ```javascript
 model: function(params) {}
 ```
+- params are always strings
 
 ^
 - Dynamic segment content is inserted into `params`

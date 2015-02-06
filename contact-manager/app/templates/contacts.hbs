@@ -1,3 +1,22 @@
-<h1>Contact List for {{name}}</h1>
 {{#link-to 'index'}}Go to the index{{/link-to}}
-{{outlet}}
+<div class="contacts-container">
+
+  <div class="sidebar">
+    {{#link-to "contacts.new" classNames="sidebar-link"}}
+      Add a New Contact
+    {{/link-to}}
+
+    <input class="sidebar-search">
+
+    {{#each contact in model}}
+      {{#link-to "contacts.show" contact classNames="sidebar-link"}}
+        {{contact.firstName}} {{contact.lastName}}
+      {{/link-to}}
+    {{/each}}
+  </div>
+
+  <div class="content">
+    {{outlet}}
+  </div>
+
+</div>

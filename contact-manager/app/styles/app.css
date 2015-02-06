@@ -1,3 +1,87 @@
-html, body {
-  margin: 20px;
+html {
+  box-sizing: border-box;
+  font-family: "Helvetica Neue", Helvetica, arial, sans-serif;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+  margin: 0; padding: 0;
+}
+
+h1 {
+  margin-bottom: 2rem;
+}
+
+.contact-header {
+  display: inline-block;
+}
+
+.contacts-container {
+  display: flex;
+}
+
+.sidebar {
+  width: 20%;
+  padding: 0.25rem;
+  background: #f6f6f6;
+  overflow-y: auto;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 0.2rem 1rem;
+  color: #222;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.sidebar-link.active {
+  color: #fff;
+  background: purple;
+}
+
+.sidebar-search {
+  width: calc(100% - 2rem);
+  margin: 0.2rem 1rem;
+  padding: 0.25rem;
+}
+
+.content {
+  width: 80%;
+  padding-left: 3rem;
+}
+
+.content h1 {
+  padding-left: 127px;
+}
+
+.field {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1rem;
+}
+
+.field input {
+  padding: 0.25rem;
+  font-size: 14px;
+}
+
+.field-label {
+  display: inline-block;
+  width: 125px;
+}
+
+.button {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.25rem 1rem;
+  font-size: 14px;
+  color: #222;
+  cursor: pointer;
+  text-decoration: none;
+  background: #fff;
+}
+
+.button--cancel {
+  border: none;
+  font-size: 12px;
 }

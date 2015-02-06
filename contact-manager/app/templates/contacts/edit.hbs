@@ -1,1 +1,37 @@
-Let's edit some contacts!
+<h1>{{model.firstName}} {{model.lastName}}</h1>
+
+<div class="field">
+  <label>
+    <span class="field-label">First Name</span>
+    {{input value=model.firstName}}
+  </label>
+</div>
+
+<div class="field">
+  <label>
+    <span class="field-label">Last Name</span>
+    {{input value=model.lastName}}
+  </label>
+</div>
+
+<div class="field">
+  <label>
+    <span class="field-label">Email</span>
+    {{input value=model.email}}
+  </label>
+</div>
+
+<div class="field">
+  <label>
+    <span class="field-label">Phone</span>
+    {{input value=model.phone}}
+    <select>
+      <option>Mobile</option>
+      <option>Work</option>
+      <option>Home</option>
+    </select>
+  </label>
+</div>
+
+<button class="button" {{action "save" model}}>Save</button>
+{{link-to "cancel" "contacts.show" model class="button button--cancel"}}
