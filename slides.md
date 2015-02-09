@@ -88,17 +88,53 @@ cd into your new app and run it with `ember serve`
 ## MVC != MVC
 
 ^
-- Routes, models, views, controllers
+- Routes, models, views, controllers, templates
 - Same words as other frameworks, different meanings
 - Don't try to make an analogy to your previous experience based on what the thing is called.
 
 ---
-# Ember Flow
+# jsbin
+[sample](http://emberjs.jsbin.com/wujadu/1/edit?html,js,output)
+
+- Good resource for learning and sharing
+- Almost mandatory for demonstrating bugs
+
+---
+# Ember Workflow
+
 - Start with a static mockup
 - Break the app into screens and URLs
 - Define the app's Routes
 - Fill in the app's Templates from the mockup
 - Wire up models
+
+---
+# HTML Mockup
+/contact-manager/mockups/contact.html
+
+---
+# Breaking an app into routes
+[google doc](https://docs.google.com/a/neo.com/presentation/d/1i6TgxM41f6KMP_3w4lXB7wzuAsChJjaegG-OYv1J_nI/edit?usp=sharing)
+
+---
+# A Route's Responsibilities
+
+- Turn its part of the url into a model
+- Render its template with that model
+
+^
+- Mapping URLs to pages is an [explicit goal](http://www.confreaks.com/videos/2960-jsconfeu2013-stop-breaking-the-web)
+- URLs are shareable
+- Ember can manage the URL with hash or the history api.
+- Query parameters are also supported (more later)
+
+---
+# Excercise
+
+- Add routes to the app in `router.js`
+- Break the mockup out into different templates
+- Add {{outlet}} where needed
+- Create Routes as needed
 
 ---
 # The Ember object model
@@ -472,17 +508,23 @@ If we don't make these objects ourselves,
 **Ember will generate them for us at runtime**
 
 ---
-#Dynamic Route Segments
-
-```javascript
-this.route("show", { path: "/:id });
-```
-
-The `id` parameter will be available to the `show` route in the example above.
+# Dynamic Route Segments
 
 Dynamic segments are underscored.
 ```javascript
-this.route("show", { path: "/:long_param" });
+//router.js
+this.route("person", { path: "/:person_id" });
+this.route("show", { path: "/:id });
+
+// routes/person.js
+
+export default Ember.Route.extend({
+  model: function(params) {
+   return findPerson(params.person_id);
+  }
+});
+
+
 ```
 
 ---
@@ -563,11 +605,14 @@ URL                  Routes Run
 ---
 # Controllers
 
+- Ember will generate a controller for you based on your route definition
+- Don't let Ember do that.
+
+
+^
 - Ember provides Controller, ObjectController, and ArrayController
 - ObjectController and ArrayController proxy their models
 - 'model' is aliased to 'content'
-
-^
 - Proxying is [on the way out](https://github.com/emberjs/rfcs/pull/15), so avoid it if possible
 
 ---
@@ -575,54 +620,6 @@ URL                  Routes Run
 
 ^
 - Controllers stick around after being instantiated.
-
----
-# Proxies
-
-- Ember.ObjectProxy class
-- Ember.ArrayProxy class
-
-```javascript
-var proxy = Ember.ObjectProxy.create();
-proxy.set('content', {foo: "bar"});
-proxy.get('foo');
-
-proxy.set('whatever', "you want");
-proxy.get('anything');
-```
-
-^
-- The proxy delegates gets and sets to its content if they don't exist on the proxy
-- Proxies blow up if an undefined prop gets set (one not defined on the prototype)
-- Proxies also blow up when getting an undefined prop instead of just returning undefined
-- Array proxies will delegate map, etc. to their content property
-- Promise proxies will set their content property when their promise resolves (more later)
-
----
-# TESTING
-
-^
-- Ember CLI does most of the setup work for you.
-- Unit tests and 'integration tests'
-- Ember.Test provides general helpers that other packages use
-- Currently adapters for qunit and mocha
-
----
-# Unit testing in qunit
-
-- complex property logic
-- business logic
-
----
-# Qunit basics
-
-- moduleFor
-- tests
-- assertions
-- qunit testing style
-
-^
-- Ember source tests are a good place to go for examples
 
 ---
 # Templates
@@ -939,8 +936,11 @@ model: function(params) {}
 ---
 # serialize
 ```javascript
+this.transitionTo('person', {name: 'Steve', id: 5});
+
+//personRoute
 serialize: function(model) {
-  return "This-slug-goes-in-the-url";
+  return model.get('lastName');
 }
 ```
 
@@ -983,12 +983,6 @@ setupController: function(controller, model) {
   this.controllerFor('application').set('currentPage', 5);
 }
 ```
-
----
-# Controllers and .init
-
-- controllers are proxies
-- both getting and setting undefined props will cause a `TypeError`
 
 ---
 # controllerFor
@@ -1272,6 +1266,8 @@ actions: {
 <!-- jsbin modal -->
 # Rendering Modals
 
+- use a named outlet, `{{outlet "modal"}}`
+
 [A simple modal](http://emberjs.jsbin.com/yiyuji/1/edit?html,css,js,output)
 
 - [Ember.Route.render](http://emberjs.com/api/classes/Ember.Route.html#method_render)
@@ -1279,10 +1275,8 @@ docs are useful
 
 ^
 - the controller created by render is a singleton
-- Disconnecting the outlet doesn't destory the controller
+- Disconnecting the outlet doesn't destroy the controller
 
----
-# TESTING integration testing using module() and startApp()
 
 ---
 <!-- jsbin components -->
@@ -1511,6 +1505,35 @@ Tear down what you set up.
 ^
 - maybe common logic should live in a service object
 ---
+# TESTING
+
+^
+- Ember CLI does most of the setup work for you.
+- Unit tests and 'integration tests'
+- Ember.Test provides general helpers that other packages use
+- Currently adapters for qunit and mocha
+
+---
+# Unit testing in qunit
+
+- complex property logic
+- business logic
+
+---
+# Qunit basics
+
+- moduleFor
+- tests
+- assertions
+- qunit testing style
+
+^
+- Ember source tests are a good place to go for examples
+
+---
+# TESTING integration testing using module() and startApp()
+
+---
 
 # TESTING components
 # component actions
@@ -1547,6 +1570,35 @@ Tear down what you set up.
 # Rerendering lists
 # ArrayComputed properties
 
+---
+# Controllers and .init
+
+- if you use ObjectController or ArrayController
+- both getting and setting undefined props will cause a `TypeError`
+
+---
+# Proxies
+
+- Ember.ObjectProxy class
+- Ember.ArrayProxy class
+
+```javascript
+var proxy = Ember.ObjectProxy.create();
+proxy.set('content', {foo: "bar"});
+proxy.get('foo');
+
+proxy.set('whatever', "you want");
+proxy.get('anything');
+```
+
+^
+- The proxy delegates gets and sets to its content if they don't exist on the proxy
+- Proxies blow up if an undefined prop gets set (one not defined on the prototype)
+- Proxies also blow up when getting an undefined prop instead of just returning undefined
+- Array proxies will delegate map, etc. to their content property
+- Promise proxies will set their content property when their promise resolves (more later)
+
+---
 # Using PromiseProxy
 
 ==============
