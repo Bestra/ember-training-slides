@@ -129,7 +129,7 @@ cd into your new app and run it with `ember serve`
 - Query parameters are also supported (more later)
 
 ---
-# Excercise
+# Exercise
 
 - Add routes to the app in `router.js`
 - Break the mockup out into different templates
@@ -156,86 +156,6 @@ var Warrior = Person.extend({
  - Call `_super` from inside a subclassed method.
 
 ---
-# Object initialization behavior
-
----
-# init
-
-```javascript
-var Person = Ember.Object.extend({
-  init: function() {
-    console.log("I'm a person");
-    this._super();
-  }
-})
-
-Person.create();
-// console: "I'm a person"
-```
-
-^
-- called when the object is created
-- call this._super() on anything other than Ember.Object
-
----
-# .on('init')
-
-```javascript
-var Person = Ember.Object.extend({
-  sayHi: function() {
-    console.log("I'm a person");
-  }.on('init')
-
-  setCats: function() {
-    this.set('cats', ["fluffy", "meekins"]);
-  }.on('init')
-})
-
-var dude = Person.create();
-// console: "I'm a person"
-dude.get('cats') // ["fluffy", "meekins"]
-```
-
-^
-- Generally better than overriding `init`
-- never overrides default init behavior
-- init event can trigger arbitrary number of actions
-
----
-# Initializing references
-```javascript
-var Person = Ember.Object.extend({
-  cats: [] // every instance of Person will have the same cats
-})
-```
-
-^
-- Person will be the prototype for any instance
-- Easy to accidentally mutate someone else's array
-- Mainly a problem with superclasses and mixins
-
----
-# Mixins
-
-```javascript
-var hasCats = Ember.Mixin.create({
-  cats: null,
-  setCats: function() {
-    this.set('cats', []);
-  }.on('init'),
-  catNames: Ember.computed.mapBy('cats.name')
-})
-
-var CatPerson = Ember.Object.create(hasCats),
-dude = CatPerson.create();
-```
-
-^
-- Multiple mixins applied in order
-- Mixins functions can be overridden with this._super()
-- Mixins more common than inheritance in Ember
-- Enumerable, ObjectProxy, etc.
----
 # Getters and setters
 
 ```javascript
@@ -243,42 +163,40 @@ var foo = Ember.Object.create({name: "Dude"});
 foo.get('name'); // "Dude"
 foo.set('name', "Sweet")
 ```
+
 ## setProperties
+
+```
+foo.setProperties({
+  name: 'Dave',
+  occupation: 'Plumber',
+  age: 25
+});
+```
 ## incrementProperty
-
----
-# Chaining
-
-```javascript
-var walter = Ember.Object.create({name: "Walter"}),
-var donny = Ember.Object.create({name: "Donny", friend: walter})
-
-donny.get('friend.name'); // => "Walter"
-donny.get('friend.rollsOnShabbos') //=> undefined
-donny.get('notThere.rollsOnShabbos') //=> undefined (no error)
-donny.notThere.rollsOnShabbos // TypeError!
 ```
-^
-- Using get will keep you from getting "Cannot read 'foo' of undefined"
-- That's a good thing and a bad thing
-
----
-# POJOs
-
-```javascript
-var a = {foo: 'bar'};
-a.get('foo') // explodes
-a.set('dude', 'sweet') // also explodes
-
-Ember.get(a, 'foo');
-Ember.set(foo, 'dude', 'sweet');
+donny.get('age'); // 25
+donny.incrementProperty('age');
+donny.get('age'); // 26
 ```
-
-^
-- Ember.get and Ember.set will work on Ember objects and POJOs
 
 ---
 Why do we need getters and setters?
+
+```
+//model = {person: "Steve", catCount: 2};
+
+<div>
+  My man {{model.person}} has {{model.catCount}} cats
+</div>
+```
+
+Handlebars templates know to update when a property has been _set_
+
+```
+model.catCount = 5 // handlebars won't update the template
+model.set('catCount, 5); // setter causes updates to fire
+```
 
 ---
 # Computed Properties
@@ -310,11 +228,35 @@ var Person = Ember.Object.extend({
 - getters and setters eliminate the need for dirty checkinga ala angular
 
 ---
-# Array dependencies
+# Chaining
 
-- .property('cats') will only update if the `cats` array is replaced
-- .property('cats.[]') updates if a cat is added or removed
-- .property('cats.@each.name') updates if a cat is added or removed, or if a cat's name is changed
+```javascript
+var walter = Ember.Object.create({name: "Walter"}),
+var donny = Ember.Object.create({name: "Donny", friend: walter})
+
+donny.get('friend.name'); // => "Walter"
+donny.get('friend.rollsOnShabbos') //=> undefined
+donny.get('notThere.rollsOnShabbos') //=> undefined (no error)
+donny.notThere.rollsOnShabbos // TypeError!
+```
+^
+- Using get will keep you from getting "Cannot read 'foo' of undefined"
+- That's a good thing and a bad thing
+
+---
+# POJOs
+
+```javascript
+var a = {foo: 'bar'};
+a.get('foo') // explodes
+a.set('dude', 'sweet') // also explodes
+
+Ember.get(a, 'foo');
+Ember.set(foo, 'dude', 'sweet');
+```
+
+^
+- Ember.get and Ember.set will work on Ember objects and POJOs
 
 ---
 # computed setters
@@ -402,7 +344,7 @@ isEvery
 - Helpers for array operations (sort, filter etc)
 - manage dependent keys automatically
 ---
-# Motivating example - meals
+# Example
 
 ```javascript
 
@@ -416,13 +358,6 @@ var Meal = Ember.Object.extend({
   //passed in properties
   ingredients: null, //an array
 
-  //just for illustration
-  initIngredients: function() {
-    if (!this.get('ingredients')) {
-      this.set('ingredients', []); //avoid prototype problems but don't override passed in values
-    }
-  }.on('init')
-
   //computed properties
   ingredientCalories: Ember.computed.mapBy('ingredients', 'calories'),
   totalCalories: Ember.computed.sum('ingredientCalories'),
@@ -434,43 +369,103 @@ var Meal = Ember.Object.extend({
 
   isValid: Ember.computed.and('isUnderCalories', 'noFish'),
 
-  addIngredient: function(ingredient) {
-    this.get('ingredients').addObject(ingredient);
-  }
-
 });
 
-var lunch = Meal.create();
 var chz = Ingredient.create({name: "Cheese", calories: 50});
 var lettuce = Ingredient.create({name: "lettuce", calories: 20});
-lunch.get('ingredients').addObject(chz) //this kinda stinks
-lunch.addIngredient(lettuce) // better;
+var lunch = Meal.create({ingredients: [chz, lettuce]);
+lunch.get('isValid') // true
 
 ```
 ^
 - too many computed properties (CPs) can _reduce_ readability on occasion.
 
 ---
-# Breaking an app into routes
-[google doc](https://docs.google.com/a/neo.com/presentation/d/1i6TgxM41f6KMP_3w4lXB7wzuAsChJjaegG-OYv1J_nI/edit?usp=sharing)
+# Object initialization behavior
 
 ---
-# A Route's Responsibilities
-- Turn its part of the url into a model
-- Render its template with that model
+# init
 
----
-# Routing and Routes
+```javascript
+var Person = Ember.Object.extend({
+  init: function() {
+    console.log("I'm a person");
+    this._super();
+  }
+})
 
-## URL = Application State
-## Routes == URL
-## Routes == Templates
+Person.create();
+// console: "I'm a person"
+```
 
 ^
-- Mapping URLs to pages is an [explicit goal](http://www.confreaks.com/videos/2960-jsconfeu2013-stop-breaking-the-web)
-- URLs are shareable
-- Ember can manage the URL with hash or the history api.
-- Query parameters are also supported (more later)
+- called when the object is created
+- call this._super() on anything other than Ember.Object
+
+---
+# .on('init')
+
+```javascript
+var Person = Ember.Object.extend({
+  sayHi: function() {
+    console.log("I'm a person");
+  }.on('init')
+
+  setCats: function() {
+    this.set('cats', ["fluffy", "meekins"]);
+  }.on('init')
+})
+
+var dude = Person.create();
+// console: "I'm a person"
+dude.get('cats') // ["fluffy", "meekins"]
+```
+
+^
+- Generally better than overriding `init`
+- never overrides default init behavior
+- init event can trigger arbitrary number of actions
+
+---
+# Initializing references
+```javascript
+var Person = Ember.Object.extend({
+  cats: [] // every instance of Person will have the same cats
+})
+```
+
+^
+- Person will be the prototype for any instance
+- Easy to accidentally mutate someone else's array
+- Mainly a problem with superclasses and mixins
+
+---
+# Mixins
+
+```javascript
+var hasCats = Ember.Mixin.create({
+  cats: null,
+  setCats: function() {
+    this.set('cats', []);
+  }.on('init'),
+  catNames: Ember.computed.mapBy('cats.name')
+})
+
+var CatPerson = Ember.Object.create(hasCats),
+dude = CatPerson.create();
+```
+
+^
+- Multiple mixins applied in order
+- Mixins functions can be overridden with this._super()
+- Mixins more common than inheritance in Ember
+- Enumerable, ObjectProxy, etc.
+---
+# CPs and Arrays
+
+- .property('cats') will only update if the `cats` array is replaced
+- .property('cats.[]') updates if a cat is added or removed
+- .property('cats.@each.name') updates if a cat is added or removed, or if a cat's name is changed
 
 ---
 # Defining Routes
@@ -484,16 +479,9 @@ Router.map(function() {
 ```
 ---
 
-* [Ember Routing Guide](http://emberjs.com/guides/routing/defining-your-routes/#toc_resources)
-
-^
-- ES6 imports
-- Ember will expect us to have a Route defined at `app/routes/contacts.js` or it will
-automatically generate a default one for us at runtime. Visiting `/contacts` will render
-`/templates/contacts.hbs`
-
----
 # Route definitions and names
+
+- [Ember Routing Guide](http://emberjs.com/guides/routing/defining-your-routes/#toc_resources)
 
 ```javascript
 this.route("contacts", { path: "/contacts" });
@@ -608,12 +596,18 @@ URL                  Routes Run
 - Ember will generate a controller for you based on your route definition
 - Don't let Ember do that.
 
-
 ^
 - Ember provides Controller, ObjectController, and ArrayController
 - ObjectController and ArrayController proxy their models
 - 'model' is aliased to 'content'
 - Proxying is [on the way out](https://github.com/emberjs/rfcs/pull/15), so avoid it if possible
+
+---
+# Controllers are decorators
+
+- display the same model in many contexts
+- logic specific to a particular view/template
+- logicless templates == logic in controllers
 
 ---
 # Controllers are singletons
@@ -635,22 +629,41 @@ URL                  Routes Run
 - Vanilla handlebars uses some helpers that never show up in real Ember code
 ---
 # Debugging
-# Configuring logging
-# Using the stack trace
-# effective breakpoints
-# {{debugger}} to inspect template context
+
+- Configuring logging
+- Using the stack trace
+- effective breakpoints
+- {{debugger}} to inspect template context
+
+---
+# Logging
+
+```
+config/environment.js
+
+  if (environment === 'development') {
+    // ENV.APP.LOG_RESOLVER = true;
+    // ENV.APP.LOG_ACTIVE_GENERATION = true;
+    // ENV.APP.LOG_TRANSITIONS = true;
+    // ENV.APP.LOG_TRANSITIONS_INTERNAL = true;
+    // ENV.APP.LOG_VIEW_LOOKUPS = true;
+  }
+```
+
 ---
 
 ## Demo
 ^
 - Stops you in the middle of rendering
-- Helpful comments in situ
+- Helpful comments
 ---
 # the rendering context
 
 - Controller or Component
 
-context.foo --> {{foo}}
+```
+{{foo}} --> context.foo
+```
 
 ---
 # comments with {{!-- }}
@@ -663,13 +676,15 @@ context.foo --> {{foo}}
 ```
 <div class={{active}}> //no good yet.  Coming soon!
 <div {{bind-attr class=active}}>
-<div {{bind-attr class='active'}}> // stil binds to the context.active
+<div {{bind-attr class='active'}}> // stil binds to context.active
 
 <div {{bind-attr class=true}}> //wont work
 ```
 
 - bind-attr with booleans adds or removes the attr.
-```
+
+```javascript
+
 hbs:
 <button {{bind-attr disabled=isDisabled}}></button>
 
@@ -680,7 +695,8 @@ html:
 
 ---
 # Class Name Syntax
-{{bind-attr class="..."}}
+
+- `{{bind-attr class="..."}}`
 
 ```
 class="..."          bound value       class output
@@ -703,7 +719,7 @@ class="..."          bound value       class output
 
 ```
 
-"isActive:active :wont-change hidden"
+- "isActive:active :wont-change hidden" will bind three classes
 
 ^
 - string bindings work like normal
@@ -762,6 +778,23 @@ class="..."          bound value       class output
 ^
 - adds an 'active' class to a link when the current route matches the link's specified route
 - the link-to helper is really complicated internally. just sayin.
+
+---
+# Simple links
+
+```
+//route
+this.route('person', {path: '/:id'});
+
+//Will go to the person route with id=1
+{{link-to 'Show this person' 'person' 1}}
+```
+
+---
+# Exercise
+
+- Make the contacts list dynamic
+- Make the links work
 
 ---
 # Basic {{input}}
@@ -891,7 +924,7 @@ groupedPeople: [{id: 1, name: 'Steve', group: "Jets"},
 - Use a component as a partial instead
 
 ---
-# Form Excercise
+# Form Exercise
 
 <!-- TODO: jsbin, build a form for the provided model -->
 
@@ -985,6 +1018,10 @@ setupController: function(controller, model) {
 ```
 
 ---
+- setupController is often cleaner than overriding init
+
+
+---
 # controllerFor
 
 - Available in any route
@@ -1035,7 +1072,7 @@ ContactsController = Ember.Controller.extend({
 - 'activate' and 'deactivate'
 
 ---
-# EXCERCISE
+# EXERCISE
 <!-- jsbin, manipulating a simple contacts list -->
 [manipulating contacts list jsbin](http://emberjs.jsbin.com/xiguhu/2/edit?html,css,js,output)
 
