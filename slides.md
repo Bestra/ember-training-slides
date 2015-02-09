@@ -50,9 +50,15 @@ Ember is an end-to-end solution
 
 ---
 # Our Project
+![OSX contacts app](/slide-images/apple-contacts.png)
 
-We're going to make a contact list application.  It won't be too flashy but it will give us a chance
-to show off the key strengths and weaknesses of Ember.
+---
+# Editing Contacts
+![OSX contacts edit](/slide-images/apple-edit.png)
+
+---
+# New Contacts
+![OSX contacts new](/slide-images/apple-new.png)
 
 ---
 # Hello World!
@@ -77,10 +83,6 @@ cd into your new app and run it with `ember serve`
 ![Ember project structure](/slide-images/project-structure.png)
 
 ---
-# Pods
-http://www.ember-cli.com/#pod-structure
-
----
 # Ember Concepts
 
 ## MVC != MVC
@@ -91,10 +93,12 @@ http://www.ember-cli.com/#pod-structure
 - Don't try to make an analogy to your previous experience based on what the thing is called.
 
 ---
-# Embering vs. Javascripting
-
-* Happy path is all Ember
-* Anything else needs good javascript
+# Ember Flow
+- Start with a static mockup
+- Break the app into screens and URLs
+- Define the app's Routes
+- Fill in the app's Templates from the mockup
+- Wire up models
 
 ---
 # The Ember object model
@@ -211,13 +215,13 @@ foo.set('name', "Sweet")
 
 ```javascript
 var walter = Ember.Object.create({name: "Walter"}),
-var donny = Ember.Object.create({name: "Donny", friend: a})
+var donny = Ember.Object.create({name: "Donny", friend: walter})
 
 donny.get('friend.name'); // => "Walter"
 donny.get('friend.rollsOnShabbos') //=> undefined
-donny.get('notThere.rollsOnShabbos') //=> undefined
+donny.get('notThere.rollsOnShabbos') //=> undefined (no error)
+donny.notThere.rollsOnShabbos // TypeError!
 ```
-
 ^
 - Using get will keep you from getting "Cannot read 'foo' of undefined"
 - That's a good thing and a bad thing
@@ -411,9 +415,20 @@ lunch.addIngredient(lettuce) // better;
 - too many computed properties (CPs) can _reduce_ readability on occasion.
 
 ---
-# Routing
+# Breaking an app into routes
+[google doc](https://docs.google.com/a/neo.com/presentation/d/1i6TgxM41f6KMP_3w4lXB7wzuAsChJjaegG-OYv1J_nI/edit?usp=sharing)
+
+---
+# A Route's Responsibilities
+- Turn its part of the url into a model
+- Render its template with that model
+
+---
+# Routing and Routes
 
 ## URL = Application State
+## Routes == URL
+## Routes == Templates
 
 ^
 - Mapping URLs to pages is an [explicit goal](http://www.confreaks.com/videos/2960-jsconfeu2013-stop-breaking-the-web)
@@ -431,6 +446,7 @@ Router.map(function() {
   this.route("contacts", { path: "/contacts" });
 });
 ```
+---
 
 * [Ember Routing Guide](http://emberjs.com/guides/routing/defining-your-routes/#toc_resources)
 
@@ -504,7 +520,7 @@ Router.map(function() {
 ---
 # Resource makes a common parent route/template for its children
 <!-- jsbin nested resource/templates -->
-[example jsbin](http://emberjs.jsbin.com/pocico/1/edit?html,js,output)
+[example jsbin](http://emberjs.jsbin.com/pocico/2/edit?html,js,output)
 ^
 - Show how via contacts
 
@@ -524,7 +540,7 @@ import Ember from 'ember';
 
 export default Ember.Route.extend({
   model: function () {
-    return {name: "Bob Dole"}
+    return {name: "Bob Dole"};
   },
 });
 ```
