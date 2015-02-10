@@ -63,9 +63,14 @@ Ember is an end-to-end solution
 ---
 # Hello World!
 
+Global Setup
 ```sh
 npm install -g bower
-npm install -g ember-cli@0.1.7
+npm install -g ember-cli@0.1.12
+```
+Creating a new project
+
+```
 ember new contact-manager
 cd contact-manager
 ```
@@ -75,12 +80,11 @@ cd into your new app and run it with `ember serve`
 ![Hello World](/slide-images/hello.png)
 
 ---
-# Ember inspector
-- Chrome and Firefox
-
----
 # Ember CLI Project Structure
 ![Ember project structure](/slide-images/project-structure.png)
+
+- package.json
+- bower.json
 
 ---
 # Ember Concepts
@@ -93,13 +97,6 @@ cd into your new app and run it with `ember serve`
 - Don't try to make an analogy to your previous experience based on what the thing is called.
 
 ---
-# jsbin
-[sample](http://emberjs.jsbin.com/wujadu/1/edit?html,js,output)
-
-- Good resource for learning and sharing
-- Almost mandatory for demonstrating bugs
-
----
 # Ember Workflow
 
 - Start with a static mockup
@@ -107,6 +104,14 @@ cd into your new app and run it with `ember serve`
 - Define the app's Routes
 - Fill in the app's Templates from the mockup
 - Wire up models
+
+---
+# Hello Ember
+[jsbin](http://emberjs.jsbin.com/wujadu/2/edit?html,js,output)
+
+## JSBins are great
+- Good resource for learning and sharing
+- Almost mandatory for demonstrating bugs
 
 ---
 # HTML Mockup
@@ -135,6 +140,10 @@ cd into your new app and run it with `ember serve`
 - Break the mockup out into different templates
 - Add {{outlet}} where needed
 - Create Routes as needed
+
+---
+# Ember inspector
+- Chrome and Firefox
 
 ---
 # The Ember object model
@@ -433,6 +442,7 @@ var Person = Ember.Object.extend({
   cats: [] // every instance of Person will have the same cats
 })
 ```
+- Console Demo
 
 ^
 - Person will be the prototype for any instance
@@ -443,7 +453,7 @@ var Person = Ember.Object.extend({
 # Mixins
 
 ```javascript
-var hasCats = Ember.Mixin.create({
+var HasCats = Ember.Mixin.create({
   cats: null,
   setCats: function() {
     this.set('cats', []);
@@ -451,7 +461,7 @@ var hasCats = Ember.Mixin.create({
   catNames: Ember.computed.mapBy('cats.name')
 })
 
-var CatPerson = Ember.Object.create(hasCats),
+var CatPerson = Ember.Object.create(HasCats),
 dude = CatPerson.create();
 ```
 
@@ -466,6 +476,11 @@ dude = CatPerson.create();
 - .property('cats') will only update if the `cats` array is replaced
 - .property('cats.[]') updates if a cat is added or removed
 - .property('cats.@each.name') updates if a cat is added or removed, or if a cat's name is changed
+
+---
+# Excercise: Contact model
+
+- Make a contact for our app
 
 ---
 # Defining Routes
@@ -499,6 +514,7 @@ If we don't make these objects ourselves,
 # Dynamic Route Segments
 
 Dynamic segments are underscored.
+
 ```javascript
 //router.js
 this.route("person", { path: "/:person_id" });
@@ -511,8 +527,6 @@ export default Ember.Route.extend({
    return findPerson(params.person_id);
   }
 });
-
-
 ```
 
 ---
@@ -550,7 +564,7 @@ Router.map(function() {
 ---
 # Resource makes a common parent route/template for its children
 <!-- jsbin nested resource/templates -->
-[example jsbin](http://emberjs.jsbin.com/pocico/2/edit?html,js,output)
+[example jsbin](http://emberjs.jsbin.com/pocico/4/edit?html,js,output)
 ^
 - Show how via contacts
 
@@ -591,10 +605,36 @@ URL                  Routes Run
 ```
 
 ---
+# modelFor and controllerFor
+
+```javascript
+ApplicationController = Ember.Controller.extend({
+  model: function() {
+    return {id: 5, name: "Steve"}
+  })
+}
+
+ContactsController = Ember.Controller.extend({
+  model: function() {
+    var currentUser = this.modelFor('application');
+    return $.getJSON('api/user/' + currentUser.get('id') + '/contacts');
+  })
+
+  afterModel: function() {
+    this.controllerFor('application').set('currentPage', 'contacts')
+  }
+}
+```
+
+^
+- a route can access models from its parents
+
+---
 # Controllers
 
 - Ember will generate a controller for you based on your route definition
-- Don't let Ember do that.
+- It's good practice to always define your own stuff rather than letting ember
+do it for you
 
 ^
 - Ember provides Controller, ObjectController, and ArrayController
@@ -607,11 +647,14 @@ URL                  Routes Run
 
 - display the same model in many contexts
 - logic specific to a particular view/template
-- logicless templates == logic in controllers
+- logicless templates == view logic in controllers
 
 ---
 # Controllers are singletons
 
+- There's only one of each kind in your app
+- It doesn't go away between requests
+- If you make a mess you have to clean it up
 ^
 - Controllers stick around after being instantiated.
 
@@ -622,7 +665,7 @@ URL                  Routes Run
 # Handlebars
 
 - Mustache on steriods
-- Ember handlebars is Handlebars on HGH
+- Ember handlebars is different than vanilla handlebars
 
 ^
 - Ember has some helpers that are specific
@@ -666,7 +709,11 @@ config/environment.js
 ```
 
 ---
-# comments with {{!-- }}
+# comments
+
+```
+{{!-- This is a comment --}}
+```
 
 ^
 - html comments will either be rendered or blow up your template
@@ -788,6 +835,17 @@ this.route('person', {path: '/:id'});
 
 //Will go to the person route with id=1
 {{link-to 'Show this person' 'person' 1}}
+```
+
+```
+//route
+//'calendar/2015-01-05/appointments/5'
+this.resource('calendar', {path: 'calendar/:date}, function() {
+  this.route('appointment', {path: 'appointments/:id'});
+}
+
+//Will go to the appointment route with id=1
+{{link-to 'Edit my appointment' 'calendar.appointment' '2015-01-05' 5}}
 ```
 
 ---
@@ -1000,14 +1058,7 @@ hooks again.
 ---
 # setupController
 
-```javascript
-//this is the default implementation
-setupController: function(controller, model) {
-  controller.set('model', model);
-}
-```
-
-- setup other state
+- setup non-model state
 
 ```javascript
 setupController: function(controller, model) {
@@ -1065,38 +1116,6 @@ ContactsController = Ember.Controller.extend({
 
 ^
 - a route can access models from its parents
-
----
-# Route events
-
-- 'activate' and 'deactivate'
-
----
-# EXERCISE
-<!-- jsbin, manipulating a simple contacts list -->
-[manipulating contacts list jsbin](http://emberjs.jsbin.com/xiguhu/2/edit?html,css,js,output)
-
----
-# route loading substates
-
-```javascript
-Router.map(function() {
-  this.resource('contacts', function() {
-    this.route('show', {path: "/:contact_id"});
-  });
-})
-```
----
-# activate and deactivate events
-
-
----
-<!-- TODO: jsbin -->
-# EXAMPLE render loading templates
-
----
-<!-- TODO: jsbin -->
-# EXAMPLE a spinner with loading and didTransition
 
 ---
 # {{link-to}} and transitions
@@ -1542,6 +1561,28 @@ Tear down what you set up.
 ^
 - maybe common logic should live in a service object
 ---
+# Using ember cli addons
+- `ember-buffered-proxy`
+- `npm install ember-buffered-proxy`
+- `import BufferedProxy from 'ember-buffered-proxy/proxy';`
+---
+
+# services
+# Ember.inject.service()
+# Ember.inject.controller()
+
+---
+# Services make testing easier
+
+---
+# Exercise: LocalStorage
+
+- Hold contacts inside a service rather than the contacts route
+
+---
+# initializers
+# the application container
+---
 # TESTING
 
 ^
@@ -1577,22 +1618,45 @@ Tear down what you set up.
 # using the integration helpers to test a rendered component
 
 ---
-# services
-# Ember.inject.service()
-# Ember.inject.controller()
-
----
-# initializers
-# the application container
----
 # Query Params are a controller thing
 # using the query-params handlebars helper
 
 ---
+# Route events
+
+- 'activate' and 'deactivate'
+
+---
+# EXERCISE
+<!-- jsbin, manipulating a simple contacts list -->
+[manipulating contacts list jsbin](http://emberjs.jsbin.com/xiguhu/2/edit?html,css,js,output)
+
+---
+# route loading substates
+
+```javascript
+Router.map(function() {
+  this.resource('contacts', function() {
+    this.route('show', {path: "/:contact_id"});
+  });
+})
+```
+
+---
+# activate and deactivate events
+
+
+---
+<!-- TODO: jsbin -->
+# EXAMPLE render loading templates
+
+---
+<!-- TODO: jsbin -->
+# EXAMPLE a spinner with loading and didTransition
+
 
 # Views
 # Controllers, Components, Views
-# Tempate Rendering Context
 # View layouts
 
 # observers
