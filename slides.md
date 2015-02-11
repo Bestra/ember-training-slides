@@ -97,6 +97,150 @@ cd into your new app and run it with `ember serve`
 - Don't try to make an analogy to your previous experience based on what the thing is called.
 
 ---
+# Mile High Overview
+- Templates
+- Routes
+- Models
+
+---
+# Template
+- Handlebars template
+- HTML with dynamic content in {{}}
+```
+<div>
+  My friend is {{friend.name}}
+</div>
+```
+
+---
+# Route
+- Defines a url for the user to view
+- Turns a url into a model
+- Renders a template with its model
+
+---
+# Model
+- Any javascript value
+- Arrays, Objects, Ember Objects, etc.
+
+---
+# What are we seeing?
+- app/router.js
+
+---
+# Router.js
+
+- the most important file in the project
+
+```
+import Ember from 'ember';
+import config from './config/environment';
+
+var Router = Ember.Router.extend({
+  location: config.locationType
+});
+
+Router.map(function() {
+});
+
+export default Router;
+```
+
+---
+# Import
+
+```
+import Ember from 'ember';
+import config from './config/environment';
+```
+- no global variables!
+- 'ember' is special
+- environment.js is a file in our project
+---
+# Defining a route
+
+```
+Router.map(function() {
+  this.route('about');
+});
+```
+
+## defines more than just a route
+
+1. You can navigate to `/about`
+1. Ember runs the route at `app/routes/about.js`
+1. Ember renders the template at `app/templates/about.hbs`
+
+---
+# A template
+
+Create the file at `/app/templates/about.hbs`
+
+```handlebars
+<div>
+  This is the contacts app for our workshop
+</div>
+```
+
+Visit '/about'
+---
+# Auto Generation
+
+- We didn't have to define the about route
+- Ember will create some objects for us
+- Too much magic can be confusing
+
+---
+# The About Route
+
+- define '/app/routes/about.js'
+
+```
+import Ember from 'ember';
+
+export default Ember.Route.extend();
+```
+- the 'name' of the export doesn't matter
+- only the file path matters
+
+---
+# Routes and paths
+
+```
+Router.map(function() {
+  this.route('about', {path: '/start'});
+});
+```
+
+1. You can navigate to `/start`
+1. Ember runs the route at `app/routes/about.js`
+1. Ember renders the template at `app/templates/about.hbs`
+
+The route name and template **don't** depend on the route's path
+
+---
+# a model
+
+- Show today's date on the about page
+
+```
+//app/routes/about.js
+
+export default Ember.Route.extend({
+  model: function() {
+   var today = new Date().toISOString();
+   return {date: today};
+  }
+});
+```
+
+```
+<div>
+<p> This is the contacts app for our workshop </p>
+<p> Today is {{model.date}} </p>
+</div>
+```
+---
 # Ember Workflow
 
 - Start with a static mockup
@@ -104,14 +248,6 @@ cd into your new app and run it with `ember serve`
 - Define the app's Routes
 - Fill in the app's Templates from the mockup
 - Wire up models
-
----
-# Hello Ember
-[jsbin](http://emberjs.jsbin.com/wujadu/2/edit?html,js,output)
-
-## JSBins are great
-- Good resource for learning and sharing
-- Almost mandatory for demonstrating bugs
 
 ---
 # HTML Mockup
@@ -146,6 +282,19 @@ cd into your new app and run it with `ember serve`
 - Chrome and Firefox
 
 ---
+# Hello Ember
+[jsbin](http://emberjs.jsbin.com/wujadu/2/edit?html,js,output)
+
+## JSBins are great
+- Good resource for learning and sharing
+- Almost mandatory for demonstrating bugs
+
+---
+# Modules vs. Globals
+- jsbin uses globals
+- 'app/routes/contacts.js' --> App.ContactsRoute
+- 'app/routes/contacts/edit.js' --> App.ContactsEditRoute
+---
 # The Ember object model
 
 ```javascript
@@ -156,6 +305,14 @@ var Person = Ember.Object.extend({
 var Warrior = Person.extend({
   attack: function(damage) { this._super(damage + 50) }
 });
+```
+
+```javascript
+mike = Person.create();
+mike.attack(30); //console: "Attack for 30 damage"
+
+conan = Warrior.create();
+conan.attack(30); //console: "Attack for 80 damage"
 ```
 
 ^
@@ -171,22 +328,7 @@ var Warrior = Person.extend({
 var foo = Ember.Object.create({name: "Dude"});
 foo.get('name'); // "Dude"
 foo.set('name', "Sweet")
-```
-
-## setProperties
-
-```
-foo.setProperties({
-  name: 'Dave',
-  occupation: 'Plumber',
-  age: 25
-});
-```
-## incrementProperty
-```
-donny.get('age'); // 25
-donny.incrementProperty('age');
-donny.get('age'); // 26
+foo.get('name'); // "Sweet"
 ```
 
 ---
@@ -218,25 +360,49 @@ var Person = Ember.Object.extend({
   fullName: function() {
     return this.get('firstName') + " " + this.get('lastName');
   }.property('firstName', 'lastName'),
-
-  //always updates
-  eagerProperty: function() {
-    return window.location.origin
-  }.property().volatile(),
-
-  //alternate syntax
-  otherFullName: Ember.computed('firstName, 'lastName', function() {
-    return this.get('firstName') + " " + this.get('lastName');
-  })
 })
+
+var guy = Person.create();
+guy.get('fullName'); // 'Some Guy'
+guy.set('firstName', 'Another');
+guy.get('fullName'); // 'Another Guy'
+
+guy.lastName = 'Person';
+guy.get('fullName'); // 'Another Guy'
+// the property doesn't update without 'set'
 ```
+
 ^
-- property takes any number of dependent keys
+- fullName is a _computed property_
+- firstName and lastName are _dependent keys_
 - value is cached until one of the dependent properties changes
 - changing a dependent property without using `set()` won't change the CP
 - getters and setters eliminate the need for dirty checkinga ala angular
 
 ---
+# Caching
+
+```javascript
+var LoudPerson = Person.extend({
+  loudName: function() {
+    var name = this.get('fullName')
+    console.log("Calculating");
+    return name.toUpperCase();
+  }.property('fullName')
+});
+
+joe = Person.create();
+joe.get('loudName'); //console: Calculating
+joe.get('loudName'); //console:
+joe.set('firstName', "Bob");
+joe.get('loudName'); //console: Calculating
+```
+
+- properties save their values
+- properties only recalculate when they have to
+
+---
+
 # Chaining
 
 ```javascript
@@ -260,48 +426,12 @@ var a = {foo: 'bar'};
 a.get('foo') // explodes
 a.set('dude', 'sweet') // also explodes
 
-Ember.get(a, 'foo');
-Ember.set(foo, 'dude', 'sweet');
+Ember.get(a, 'foo'); // 'bar'
+Ember.set(a, 'dude', 'sweet'); //{foo: 'bar', dude: 'sweet'}
 ```
 
 ^
 - Ember.get and Ember.set will work on Ember objects and POJOs
-
----
-# computed setters
-
-Current:
-
-```javascript
-fullName: Ember.computed('firstName, 'lastName', function(key, value) {
-  if (arguments.length > 1) {
-    var names = value.split(' ');
-    this.set('firstName', names[0]);
-    this.set('lastName', names[1]);
-  }
-  return this.get('firstName') + " " + this.get('lastName');
-})
-```
-
-With the `new-computed-syntax` flag
-
-```javascript
-fullName: Ember.computed('firstName, 'lastName', {
-  get: function(key) {
-    return this.get('firstName') + " " + this.get('lastName');
-  },
-  set: function(key, value) {
-    var names = value.split(' ');
-    this.set('firstName', names[0]);
-    this.set('lastName', names[1]);
-    return value;
-  }
-})
-```
-
-^
-- Currently done by checking the number of args in the getter function
-- New method part of the 2.0 rfc
 
 ---
 # Arrays
@@ -309,27 +439,31 @@ fullName: Ember.computed('firstName, 'lastName', {
 [reference](http://emberjs.com/api/classes/Ember.Array.html)
 
 ```javascript
-var a = [1,2,3];
+var a = ['first', 'second', 'third'];
 
-a.get('length')
-a.get('firstObject')
-a.objectAt(1)
-a.indexOf(3)
+a.length // 3
+a.get('length') // 3
+a.[0] // 'first'
+a.get('firstObject') // 'first'
+a.objectAt(1) // 'second'
+```
 
-var theDude = {name: "Lebowski"};
-
-var people = [{name: "Lebowski"}, {name: "Bunny"}];
-
-people.contains(theDude);
-
-people.addObject(theDude);
-people.addObject(theDude);
+---
+# Adding things to arrays
 
 ```
+var a = ['first', 'second'];
+
+a.addObject('third') // ['first', 'second', 'third']
+a.addObject('third') // ['first', 'second', 'third'] -- same
+a.pushObject('third') // ['first', 'second', 'third', 'third']
+
+```
+
+- addObject doesn't add duplicates
+- be careful adding objects!
 ^
 - Finding in a collection is all done by reference
-- Always use the getters for access.
-- addObject vs. pushObject
 
 ---
 # Collections and Ember.Enumerable
@@ -358,7 +492,39 @@ isEvery
 ```javascript
 
 var Ingredient = Ember.Object.extend({
-  hasFish: false
+  calories: 0,
+  name: ""
+});
+
+var Meal = Ember.Object.extend({
+  //passed in properties
+  ingredients: null, //an array
+
+  //computed properties
+  totalCalories: function() {
+    return this.get('ingredients').reduce(function(memo, item) {
+      return memo + item.get('calories');
+    }, 0)
+  }.property('ingredients.@each.calories'),
+
+  isTooBig: function() {
+    return this.get('totalCalories') > 2500;
+  }
+});
+```
+
+---
+# CPs and Arrays
+
+- .property('cats') will only update if the `cats` array is replaced
+- .property('cats.[]') updates if a cat is added or removed
+- .property('cats.@each.name') updates if a cat is added or removed, or if a cat's name is changed
+
+---
+# Example
+
+```javascript
+var Ingredient = Ember.Object.extend({
   calories: 0,
   name: ""
 });
@@ -371,83 +537,10 @@ var Meal = Ember.Object.extend({
   ingredientCalories: Ember.computed.mapBy('ingredients', 'calories'),
   totalCalories: Ember.computed.sum('ingredientCalories'),
 
-  isUnderCalories: Ember.computed.lt('totalCalories', 500),
-
-  fishIngredients: Ember.computed.filterBy('ingredients', 'hasFish'),
-  noFish: Ember.computed.empty('fishIngredients'),
-
-  isValid: Ember.computed.and('isUnderCalories', 'noFish'),
+  isTooBig: Ember.computed.gt('totalCalories', 2500)
 
 });
-
-var chz = Ingredient.create({name: "Cheese", calories: 50});
-var lettuce = Ingredient.create({name: "lettuce", calories: 20});
-var lunch = Meal.create({ingredients: [chz, lettuce]);
-lunch.get('isValid') // true
-
 ```
-^
-- too many computed properties (CPs) can _reduce_ readability on occasion.
-
----
-# Object initialization behavior
-
----
-# init
-
-```javascript
-var Person = Ember.Object.extend({
-  init: function() {
-    console.log("I'm a person");
-    this._super();
-  }
-})
-
-Person.create();
-// console: "I'm a person"
-```
-
-^
-- called when the object is created
-- call this._super() on anything other than Ember.Object
-
----
-# .on('init')
-
-```javascript
-var Person = Ember.Object.extend({
-  sayHi: function() {
-    console.log("I'm a person");
-  }.on('init')
-
-  setCats: function() {
-    this.set('cats', ["fluffy", "meekins"]);
-  }.on('init')
-})
-
-var dude = Person.create();
-// console: "I'm a person"
-dude.get('cats') // ["fluffy", "meekins"]
-```
-
-^
-- Generally better than overriding `init`
-- never overrides default init behavior
-- init event can trigger arbitrary number of actions
-
----
-# Initializing references
-```javascript
-var Person = Ember.Object.extend({
-  cats: [] // every instance of Person will have the same cats
-})
-```
-- Console Demo
-
-^
-- Person will be the prototype for any instance
-- Easy to accidentally mutate someone else's array
-- Mainly a problem with superclasses and mixins
 
 ---
 # Mixins
@@ -470,13 +563,6 @@ dude = CatPerson.create();
 - Mixins functions can be overridden with this._super()
 - Mixins more common than inheritance in Ember
 - Enumerable, ObjectProxy, etc.
----
-# CPs and Arrays
-
-- .property('cats') will only update if the `cats` array is replaced
-- .property('cats.[]') updates if a cat is added or removed
-- .property('cats.@each.name') updates if a cat is added or removed, or if a cat's name is changed
-
 ---
 # Excercise: Contact model
 
@@ -550,18 +636,6 @@ Router.map(function() {
 - routes can specify a namespace directly if they want
 
 ---
-# Route nesting = template nesting
-
----
-# Template Nesting
-
-- A route's template can have an {{outlet}} for its children
-
-^
-- Ember's nested resources are not Rails' nested resources
-- Nested resources  == master/detail, navbar
-
----
 # Resource makes a common parent route/template for its children
 <!-- jsbin nested resource/templates -->
 [example jsbin](http://emberjs.jsbin.com/pocico/4/edit?html,js,output)
@@ -605,31 +679,6 @@ URL                  Routes Run
 ```
 
 ---
-# modelFor and controllerFor
-
-```javascript
-ApplicationController = Ember.Controller.extend({
-  model: function() {
-    return {id: 5, name: "Steve"}
-  })
-}
-
-ContactsController = Ember.Controller.extend({
-  model: function() {
-    var currentUser = this.modelFor('application');
-    return $.getJSON('api/user/' + currentUser.get('id') + '/contacts');
-  })
-
-  afterModel: function() {
-    this.controllerFor('application').set('currentPage', 'contacts')
-  }
-}
-```
-
-^
-- a route can access models from its parents
-
----
 # Controllers
 
 - Ember will generate a controller for you based on your route definition
@@ -657,6 +706,31 @@ do it for you
 - If you make a mess you have to clean it up
 ^
 - Controllers stick around after being instantiated.
+
+---
+# modelFor and controllerFor
+
+```javascript
+ApplicationController = Ember.Controller.extend({
+  model: function() {
+    return {id: 5, name: "Steve"}
+  })
+}
+
+ContactsController = Ember.Controller.extend({
+  model: function() {
+    var currentUser = this.modelFor('application');
+    return $.getJSON('api/user/' + currentUser.get('id') + '/contacts');
+  })
+
+  afterModel: function() {
+    this.controllerFor('application').set('currentPage', 'contacts')
+  }
+}
+```
+
+^
+- a route can access models from its parents
 
 ---
 # Templates
@@ -811,6 +885,7 @@ class="..."          bound value       class output
 - old syntax {{#each foo in foos}}
 - newer block syntax {{#each foos as |foo|}}
 - trying to bind to a raw array {{someArray}} doesn't work.
+
 ---
 # {{#link-to}} and {{link-to}}
 
@@ -852,7 +927,30 @@ this.resource('calendar', {path: 'calendar/:date}, function() {
 # Exercise
 
 - Make the contacts list dynamic
+- Get contacts from app/utils/contact-generator.js
 - Make the links work
+
+---
+# Sorting and Filtering
+
+```
+  people: [{name: 'Bob', priority: 2},
+   {name: 'Mike', priority: 1},
+   {name: 'Stevesy', priority: 1}],
+
+  peopleSort: ['priorty:asc', 'name:asc'],
+  sortedPeople: Ember.computed.sort('people', 'peopleSort'),
+
+  priortyPeople: Ember.computed.filterBy('sortedPeople', 'priority', 1)
+```
+
+[filtering jsbin](http://emberjs.jsbin.com/cusomu/1/edit?html,js,output)
+
+
+
+---
+# Exercise: Filtering contacts list
+- Make the filter actually work
 
 ---
 # Basic {{input}}
@@ -1026,8 +1124,11 @@ model: function(params) {}
 
 ---
 # serialize
+
+- Useful for slugging
+
 ```javascript
-this.transitionTo('person', {name: 'Steve', id: 5});
+this.transitionTo('person', {lastName: 'jones', id: 5});
 
 //personRoute
 serialize: function(model) {
@@ -1048,7 +1149,18 @@ afterModel: function(model, transition) {}
 
 ---
 # redirect
-- redirect vs. afterModel
+
+```
+//routes/index.js
+
+export default Ember.Route.extend({
+  redirect: function() {
+    this.transitionTo('contacts');
+  }
+});
+```
+
+- Many times we don't _want_ an index route
 
 ^
 - transitioning to a child route from redirect WON'T run this route's model
@@ -1069,8 +1181,11 @@ setupController: function(controller, model) {
 ```
 
 ---
-- setupController is often cleaner than overriding init
+# Excercise: redirects
 
+- Redirect to 'contacts' when the user visits '/'
+- Show the first contact when the user visits '/contacts/'
+- Get rid of the index templates and controllers you're no longer using
 
 ---
 # controllerFor
@@ -1083,39 +1198,10 @@ setupController: function(controller, model) {
 - common to set application state on application controller
 
 ---
-# where does the controller in setupController come from?
-
----
 # renderTemplate
 * calls `route.render()`
 * use when you don't have 1:1 routes:templates
 * we'll cover `render()` later
-
----
-
-# modelFor and controllerFor
-
-```javascript
-ApplicationController = Ember.Controller.extend({
-  model: function() {
-    return {id: 5, name: "Steve"}
-  })
-}
-
-ContactsController = Ember.Controller.extend({
-  model: function() {
-    var currentUser = this.modelFor('application');
-    return $.getJSON('api/user/' + currentUser.get('id') + '/contacts');
-  })
-
-  afterModel: function() {
-    this.controllerFor('application').set('currentPage', 'contacts')
-  }
-}
-```
-
-^
-- a route can access models from its parents
 
 ---
 # {{link-to}} and transitions
@@ -1174,10 +1260,10 @@ this.resource("calendar", {path: "/calendar/:date"}, function() {
 - Index routes with big ajax payloads
 
 ---
-# aborting and redirecting transitions
-
----
 # replaceWith
+
+- like transitionTo, but doesn't add to history
+- makes sure 'back' doesn't break
 
 ---
 # actions
@@ -1310,6 +1396,15 @@ actions: {
 ^
 - Routes, Components, Views, Controllers via `Ember.ActionHandler`
 - Can send to self
+
+---
+# Exercise: New Contacts
+
+- Define a route for new contacts at 'contacts/new'.  Nest it under 'contacts'.
+- Turn the contacts/edit template into a partial
+- Use the partial to make 'contacts/new.hbs'
+- Cancel should redirect to the previously shown contact
+- Save should go to the show page for the new contact
 
 ---
 # Actions are harder to test
@@ -1486,13 +1581,14 @@ actions: {
 ---
 # nesting components
 - flexible composition
-# using `this.parentView` in a nested component
+- using `this.parentView` in a nested component
 
 ---
 # component lifecycle events
 - Enumerated fully [here](http://emberjs.com/guides/understanding-ember/the-view-layer/#toc_lifecycle-hooks)
 
 Most frequently used:
+
 - didInsertElement
 - willDestroyElement
 
@@ -1560,6 +1656,7 @@ Tear down what you set up.
 
 ^
 - maybe common logic should live in a service object
+
 ---
 # Using ember cli addons
 - `ember-buffered-proxy`
@@ -1582,6 +1679,102 @@ Tear down what you set up.
 ---
 # initializers
 # the application container
+---
+# computed setters
+
+Current:
+
+```javascript
+fullName: Ember.computed('firstName, 'lastName', function(key, value) {
+  if (arguments.length > 1) {
+    var names = value.split(' ');
+    this.set('firstName', names[0]);
+    this.set('lastName', names[1]);
+  }
+  return this.get('firstName') + " " + this.get('lastName');
+})
+```
+
+With the `new-computed-syntax` flag
+
+```javascript
+fullName: Ember.computed('firstName, 'lastName', {
+  get: function(key) {
+    return this.get('firstName') + " " + this.get('lastName');
+  },
+  set: function(key, value) {
+    var names = value.split(' ');
+    this.set('firstName', names[0]);
+    this.set('lastName', names[1]);
+    return value;
+  }
+})
+```
+
+^
+- Currently done by checking the number of args in the getter function
+- New method part of the 2.0 rfc
+
+---
+# Object initialization behavior
+
+---
+# init
+
+```javascript
+var Person = Ember.Object.extend({
+  init: function() {
+    console.log("I'm a person");
+    this._super();
+  }
+})
+
+Person.create();
+// console: "I'm a person"
+```
+
+^
+- called when the object is created
+- call this._super() on anything other than Ember.Object
+
+---
+# .on('init')
+
+```javascript
+var Person = Ember.Object.extend({
+  sayHi: function() {
+    console.log("I'm a person");
+  }.on('init')
+
+  setCats: function() {
+    this.set('cats', ["fluffy", "meekins"]);
+  }.on('init')
+})
+
+var dude = Person.create();
+// console: "I'm a person"
+dude.get('cats') // ["fluffy", "meekins"]
+```
+
+^
+- Generally better than overriding `init`
+- never overrides default init behavior
+- init event can trigger arbitrary number of actions
+
+---
+# Initializing references
+```javascript
+var Person = Ember.Object.extend({
+  cats: [] // every instance of Person will have the same cats
+})
+```
+- Console Demo
+
+^
+- Person will be the prototype for any instance
+- Easy to accidentally mutate someone else's array
+- Mainly a problem with superclasses and mixins
+
 ---
 # TESTING
 
@@ -1676,6 +1869,23 @@ Router.map(function() {
 
 - if you use ObjectController or ArrayController
 - both getting and setting undefined props will cause a `TypeError`
+
+---
+## setProperties
+
+```
+foo.setProperties({
+  name: 'Dave',
+  occupation: 'Plumber',
+  age: 25
+});
+```
+## incrementProperty
+```
+donny.get('age'); // 25
+donny.incrementProperty('age');
+donny.get('age'); // 26
+```
 
 ---
 # Proxies

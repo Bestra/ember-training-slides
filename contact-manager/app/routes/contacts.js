@@ -1,8 +1,11 @@
 import Ember from 'ember';
+import contactList from 'contact-manager/utils/sample-contacts';
 export default Ember.Route.extend({
-  model: function () {
-    return this.get('contacts').all();
+  model: function() {
+    return contactList;
   },
 
-  contacts: Ember.inject.service('contact-store')
+  redirect: function() {
+    this.transitionTo('contacts.show', 1);
+  },
 });
