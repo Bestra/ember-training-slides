@@ -3,7 +3,7 @@ import BufferedProxy from 'ember-buffered-proxy/proxy';
 
 export default Ember.Route.extend({
   model: function(params) {
-    return this.modelFor('contacts').findBy('id', params.contact_id);
+    return this.modelFor('contacts').findBy('id', parseInt(params.contact_id));
   },
 
   setupController: function(controller, model) {

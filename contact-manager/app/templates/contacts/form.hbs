@@ -1,23 +1,8 @@
-<div class="field">
-  <label>
-    <span class="field-label">First Name</span>
-    {{input value=model.firstName}}
-  </label>
-</div>
-
-<div class="field">
-  <label>
-    <span class="field-label">Last Name</span>
-    {{input value=model.lastName}}
-  </label>
-</div>
-
-<div class="field">
-  <label>
-    <span class="field-label">Email</span>
-    {{input value=model.email}}
-  </label>
-</div>
+{{input-field label="First Name" value=model.firstName}}
+{{input-field label="Last Name" value=model.lastName}}
+{{input-field label="Email"
+              value=model.email
+              validator='email'}}
 
 <div class="field">
   <label>

@@ -6,6 +6,6 @@ export default Ember.Route.extend({
   },
 
   redirect: function() {
-    this.transitionTo('contacts.show', 1);
+    // this.transitionTo('contacts.show', 1);
   },
 });
