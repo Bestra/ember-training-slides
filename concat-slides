@@ -1,0 +1,1 @@
+cat slides/*.md > slides.md
