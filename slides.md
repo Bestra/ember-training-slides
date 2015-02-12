@@ -20,7 +20,7 @@ Ember is an end-to-end solution
 - Templating
 - API integration and persistence (Ember Data)
 - Dependencies via node and bower
-- Environment management
+- Environment management (development, production, etc)
 
 ---
 # Ember-cli (http://www.ember-cli.com/)
@@ -250,12 +250,17 @@ export default Ember.Route.extend({
 - Wire up models
 
 ---
-# HTML Mockup
-/contact-manager/mockups/contact.html
-
----
 # Breaking an app into routes
 [google doc](https://docs.google.com/a/neo.com/presentation/d/1i6TgxM41f6KMP_3w4lXB7wzuAsChJjaegG-OYv1J_nI/edit?usp=sharing)
+
+---
+# HTML Mockup
+https://gist.github.com/Bestra/3730867a60307c687bbb
+
+- copy `index.hbs` into `/app/templates/index.hbs`
+- copy `app.css` into `/app/styles/app.css`
+- copy `reset.css` into `/app/styles/reset.css`
+- delete `app/templates/application.hbs`
 
 ---
 # A Route's Responsibilities
@@ -264,7 +269,6 @@ export default Ember.Route.extend({
 - Render its template with that model
 
 ^
-- Mapping URLs to pages is an [explicit goal](http://www.confreaks.com/videos/2960-jsconfeu2013-stop-breaking-the-web)
 - URLs are shareable
 - Ember can manage the URL with hash or the history api.
 - Query parameters are also supported (more later)
@@ -294,6 +298,7 @@ export default Ember.Route.extend({
 - jsbin uses globals
 - 'app/routes/contacts.js' --> App.ContactsRoute
 - 'app/routes/contacts/edit.js' --> App.ContactsEditRoute
+
 ---
 # The Ember object model
 
@@ -516,9 +521,17 @@ var Meal = Ember.Object.extend({
 ---
 # CPs and Arrays
 
+```
+cats: [{name: 'Fifi', color: 'black'}, {name: 'Fluffy', color: 'calico'}],
+
+catNames: function() {
+  return this.get('cats').mapBy('name');
+}.property(?????)
+```
 - .property('cats') will only update if the `cats` array is replaced
 - .property('cats.[]') updates if a cat is added or removed
-- .property('cats.@each.name') updates if a cat is added or removed, or if a cat's name is changed
+- .property('cats.@each.name') updates if a cat is added or removed,
+or if a cat's name is changed.  NOT if the color changes
 
 ---
 # Example
@@ -882,12 +895,43 @@ class="..."          bound value       class output
 ---
 # Rendering Lists with {{#each}}
 
-- old syntax {{#each foo in foos}}
-- newer block syntax {{#each foos as |foo|}}
 - trying to bind to a raw array {{someArray}} doesn't work.
+- newer block syntax {{#each foos as |foo|}}
 
 ---
-# {{#link-to}} and {{link-to}}
+# {{partial 'foo'}}
+```
+//contact-form.hbs
+<div>
+  <label>
+    <span class="field-label">Your Email</span>
+    {{input value=contactEmail}}
+  </label>
+</div>
+
+//edit.hbs
+<div>
+  Edit your contact info
+  {{partial 'contact-form'}}
+</div>
+
+//new.hbs
+<div>
+  Add new contact info
+  {{partial 'contact-form'}}
+</div>
+```
+
+^
+- Partial doesn't take any locals
+- Ember cli expects a normal path name
+- non-cli expects the partial to start with '_' ala Rails
+- Use a component as a partial instead
+
+---
+# Links
+
+- Links go to a _route_ instead of a url
 
 ```
 {{#link-to routeName arg1 arg2 ...}}
@@ -946,11 +990,9 @@ this.resource('calendar', {path: 'calendar/:date}, function() {
 
 [filtering jsbin](http://emberjs.jsbin.com/cusomu/1/edit?html,js,output)
 
-
-
 ---
-# Exercise: Filtering contacts list
-- Make the filter actually work
+# Exercise: Sorting the contacts list
+- Sort contacts by last name, then first
 
 ---
 # Basic {{input}}
@@ -965,6 +1007,11 @@ this.resource('calendar', {path: 'calendar/:date}, function() {
 ```
 ^
 - value binding is two-way
+
+---
+# Exercise: Filtering contacts list
+- Make the filter input actually work
+- Don't worry about filtering out the current person
 
 ---
 # check boxes
@@ -1071,23 +1118,12 @@ groupedPeople: [{id: 1, name: 'Steve', group: "Jets"},
 - pretty easy to do yourself
 - some solutions exist as ember cli addons
 ---
-# {{partial 'foo'}}
-
-^
-- Partial doesn't take any locals
-- Ember cli expects a normal path name
-- non-cli expects the partial to start with '_' ala Rails
-- Use a component as a partial instead
-
----
 # Form Exercise
 
 <!-- TODO: jsbin, build a form for the provided model -->
 
 Build a form for the provided model
 in this [jsbin](http://emberjs.jsbin.com/xiguhu/7/edit?html,css,js,output)
-
-Bonus: implement radio buttons
 
 ---
 # The Route Lifecycle
@@ -1398,6 +1434,12 @@ actions: {
 - Can send to self
 
 ---
+# Exercise: Clear the Filter
+
+- Add a button to clear the contacts filter
+- It can be ugly
+
+---
 # Exercise: New Contacts
 
 - Define a route for new contacts at 'contacts/new'.  Nest it under 'contacts'.
@@ -1412,22 +1454,6 @@ actions: {
 - testing support in controllers and components
 - less support for routes
 - use methods instead when possible
-
----
-<!-- jsbin modal -->
-# Rendering Modals
-
-- use a named outlet, `{{outlet "modal"}}`
-
-[A simple modal](http://emberjs.jsbin.com/yiyuji/1/edit?html,css,js,output)
-
-- [Ember.Route.render](http://emberjs.com/api/classes/Ember.Route.html#method_render)
-docs are useful
-
-^
-- the controller created by render is a singleton
-- Disconnecting the outlet doesn't destroy the controller
-
 
 ---
 <!-- jsbin components -->
@@ -1565,25 +1591,14 @@ actions: {
 - access the event from the callback
 
 ---
-# component block form
+# Exercise: Input validation
 
-- Components can yield to a template
-- No crossing boundaries between component and yielded scope (normally)
-
----
-# component block form is super useful
-- wrap common widget styling or behavior
-- substitute your own contents
+- Make an input component that validates email addresses
+- Start with an existing input with label
+- Invalid addresses should show an error
 
 ---
-# block params
 
----
-# nesting components
-- flexible composition
-- using `this.parentView` in a nested component
-
----
 # component lifecycle events
 - Enumerated fully [here](http://emberjs.com/guides/understanding-ember/the-view-layer/#toc_lifecycle-hooks)
 
@@ -1622,11 +1637,31 @@ MyComponent = Ember.Component.extend({
 Tear down what you set up.
 - Custom key event listeners
 - Jquery plugins
+- Animations
 
 ---
 # places where you can't use components
 - render() and friends
 - support for top-level components coming soon
+
+---
+# component block form
+
+- Components can yield to a template
+- No crossing boundaries between component and yielded scope (normally)
+
+---
+# component block form is super useful
+- wrap common widget styling or behavior
+- substitute your own contents
+
+---
+# block params
+
+---
+# nesting components
+- flexible composition
+- using `this.parentView` in a nested component
 
 ---
 # component roles
@@ -1646,24 +1681,9 @@ Tear down what you set up.
 {{calender-item clicked="deleteItem"}}
 - caller decides what the low level event should translate to
 - calender-item renders itself independently
-- `calender-item` can be used in many different places
+- `calender-item` can be used in many different places, even different apps
 
 ---
-# debounce example
-- several components save a model
-- controller implements debounce in one place
-- debounce happens some times, some times not.
-
-^
-- maybe common logic should live in a service object
-
----
-# Using ember cli addons
-- `ember-buffered-proxy`
-- `npm install ember-buffered-proxy`
-- `import BufferedProxy from 'ember-buffered-proxy/proxy';`
----
-
 # services
 # Ember.inject.service()
 # Ember.inject.controller()
@@ -1677,6 +1697,20 @@ Tear down what you set up.
 - Hold contacts inside a service rather than the contacts route
 
 ---
+# Waiting to save a Contact
+
+- Dont want new contacts to show up before they're saved (DEMO)
+- Make a copy?
+- Temp variables?
+
+---
+# Using ember cli addons
+
+- `ember-buffered-proxy`
+- `npm install ember-buffered-proxy`
+- `import BufferedProxy from 'ember-buffered-proxy/proxy';`
+---
+
 # initializers
 # the application container
 ---
@@ -1814,6 +1848,9 @@ var Person = Ember.Object.extend({
 # Query Params are a controller thing
 # using the query-params handlebars helper
 
+# Exercise: Save Filter
+- Save the filter on the contacts controller
+
 ---
 # Route events
 
@@ -1847,7 +1884,23 @@ Router.map(function() {
 <!-- TODO: jsbin -->
 # EXAMPLE a spinner with loading and didTransition
 
+---
+<!-- jsbin modal -->
+# Rendering Modals
 
+- use a named outlet, `{{outlet "modal"}}`
+
+[A simple modal](http://emberjs.jsbin.com/yiyuji/1/edit?html,css,js,output)
+
+- [Ember.Route.render](http://emberjs.com/api/classes/Ember.Route.html#method_render)
+docs are useful
+
+^
+- the controller created by render is a singleton
+- Disconnecting the outlet doesn't destroy the controller
+
+
+---
 # Views
 # Controllers, Components, Views
 # View layouts
