@@ -1,4 +1,4 @@
-import Contact from 'contact-manager/models/contact'
+import Contact from 'contact-manager/models/contact';
 
 var names = ['Lenora Baldree',
 'Jacqualine Strickler',
@@ -23,6 +23,6 @@ var names = ['Lenora Baldree',
 
 export default names.map((name, idx) => {
   var [firstName, lastName] = name.split(' ');
-  var id = idx + 1
+  var id = idx + 1;
   return Contact.create({firstName, lastName, id});
-})
+});

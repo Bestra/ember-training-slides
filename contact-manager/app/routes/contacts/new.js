@@ -13,7 +13,7 @@ export default Ember.Route.extend({
       this.transitionTo('contacts.show', model);
     },
 
-    cancel: function(model) {
+    cancel: function() {
       this.transitionTo('contacts');
     }
   }
